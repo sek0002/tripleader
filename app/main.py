@@ -8,7 +8,7 @@ import time
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, Union
 
 import pandas as pd
 import requests
@@ -71,9 +71,9 @@ load_dotenv(BASE_DIR / ".env")
 sync_lock = threading.Lock()
 cache_lock = threading.Lock()
 initial_sync_completed = False
-_store_cache: pd.DataFrame | None = None
-_store_cache_source: Path | None = None
-_store_cache_mtime: float | None = None
+_store_cache: Optional[pd.DataFrame] = None
+_store_cache_source: Optional[Path] = None
+_store_cache_mtime: Optional[float] = None
 last_sync: dict[str, Any] = {
     "ok": None,
     "message": "Not synced yet",
@@ -107,7 +107,7 @@ def is_authenticated(request: Request) -> bool:
     return payload == {"authenticated": True}
 
 
-def require_login(request: Request) -> RedirectResponse | None:
+def require_login(request: Request) -> Optional[RedirectResponse]:
     if is_authenticated(request):
         return None
     return RedirectResponse(url="/login", status_code=303)
@@ -228,14 +228,14 @@ def _strip_quantity_prefix(value: str) -> str:
     return re.sub(r"^\s*\d+\s*x\s*[.\-:]?\s*", "", text).strip()
 
 
-def row_year(value: Any) -> int | None:
+def row_year(value: Any) -> Optional[int]:
     parsed = pd.to_datetime(value, errors="coerce")
     if pd.isna(parsed):
         return None
     return int(parsed.year)
 
 
-def _normalized_hire_duration(item: str) -> tuple[str, int] | None:
+def _normalized_hire_duration(item: str) -> Optional[tuple[str, int]]:
     lowered = _strip_quantity_prefix(item).casefold()
     if "hire" not in lowered:
         return None
@@ -258,7 +258,7 @@ def _normalized_hire_duration(item: str) -> tuple[str, int] | None:
     return None
 
 
-def _parse_date_or_none(value: Any) -> date | None:
+def _parse_date_or_none(value: Any) -> Optional[date]:
     parsed = pd.to_datetime(value, errors="coerce")
     if pd.isna(parsed):
         return None
@@ -273,7 +273,7 @@ def _add_months(start: date, months: int) -> date:
     return date(year, month, day)
 
 
-def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, str | bool]:
+def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, Union[str, bool]]:
     now = datetime.now(timezone.utc).date()
     candidates: list[tuple[date, str, int]] = []
 
@@ -374,7 +374,7 @@ def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _store_source() -> Path | None:
+def _store_source() -> Optional[Path]:
     if STORE_PATH.exists():
         return STORE_PATH
     if LEGACY_PURCHASES_PATH.exists():
@@ -420,7 +420,7 @@ def deduplicate_purchases(df: pd.DataFrame, keep: str = "first") -> pd.DataFrame
     return df.drop_duplicates(subset=["_dedupe_key"], keep=keep).reset_index(drop=True)
 
 
-def purchase_date_range(df: pd.DataFrame | None = None) -> dict[str, str]:
+def purchase_date_range(df: Optional[pd.DataFrame] = None) -> dict[str, str]:
     source = load_store() if df is None else df
     if source.empty or "date" not in source.columns:
         return {"start": "", "end": "", "label": "Available date range: no purchase data stored"}
