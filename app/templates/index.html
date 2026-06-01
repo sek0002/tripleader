@@ -17,14 +17,16 @@
           <p id="syncStatus">Preparing purchase store...</p>
           <p id="dateRangeStatus">Available date range: checking data...</p>
         </div>
-        <div class="menuWrap">
-          <button id="menuButton" class="menuButton secondaryButton" type="button" aria-expanded="false" aria-controls="pageMenu">Menu</button>
-          <div id="pageMenu" class="pageMenu hidden">
-            <button class="themeToggle menuItem" type="button" data-theme-toggle aria-label="Switch to dark mode">Dark</button>
-            <button id="refreshButton" class="menuItem" type="button">Refresh</button>
-            <form method="post" action="/logout">
-              <button class="menuItem" type="submit">Logout</button>
-            </form>
+        <div class="topActions">
+          <button id="refreshButton" type="button">Refresh</button>
+          <div class="menuWrap">
+            <button id="menuButton" class="menuButton secondaryButton" type="button" aria-expanded="false" aria-controls="pageMenu">Menu</button>
+            <div id="pageMenu" class="pageMenu hidden">
+              <button class="themeToggle menuItem" type="button" data-theme-toggle aria-label="Switch to dark mode">Dark</button>
+              <form method="post" action="/logout">
+                <button class="menuItem" type="submit">Logout</button>
+              </form>
+            </div>
           </div>
         </div>
       </section>

@@ -124,6 +124,12 @@ button:disabled {
   min-width: 78px;
 }
 
+.topActions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
 .menuWrap {
   position: relative;
 }
@@ -334,6 +340,10 @@ td:nth-child(3) {
 
   .toolbar {
     display: grid;
+  }
+
+  .topActions {
+    justify-content: end;
   }
 
   .emergencyGrid {
