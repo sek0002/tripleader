@@ -10,7 +10,14 @@ const emergencyName = document.querySelector("#emergencyName");
 const emergencyRelationship = document.querySelector("#emergencyRelationship");
 const emergencyPhone = document.querySelector("#emergencyPhone");
 const emergencyPhone2 = document.querySelector("#emergencyPhone2");
+const purchaseSearchInput = document.querySelector("#purchaseSearchInput");
+const categoryFilter = document.querySelector("#categoryFilter");
+const paidFilter = document.querySelector("#paidFilter");
+const clearFiltersButton = document.querySelector("#clearFiltersButton");
+const filterEmptyState = document.querySelector("#filterEmptyState");
 const purchaseGroups = document.querySelector("#purchaseGroups");
+
+let currentMemberPayload = null;
 
 function text(value) {
   return value && String(value).trim() ? String(value).trim() : "Not supplied";
@@ -51,24 +58,52 @@ function paidClass(value) {
   return String(value).trim().toUpperCase() === "YES" ? "paidYes" : "paidNo";
 }
 
-function renderMember(payload) {
-  if (!payload.found) {
-    memberPanel.classList.add("hidden");
-    emptyState.classList.remove("hidden");
-    emptyState.textContent = "No exact member match found. Pick a name from the suggestions.";
-    return;
-  }
+function purchaseMatches(row, category) {
+  const query = purchaseSearchInput.value.trim().toLowerCase();
+  const selectedCategory = categoryFilter.value;
+  const selectedPaid = paidFilter.value;
+  const rowText = [row.date, row.paid, row.total, row.items].map(text).join(" ").toLowerCase();
+  const paidValue = String(row.paid || "").trim().toUpperCase();
 
-  emptyState.classList.add("hidden");
-  memberPanel.classList.remove("hidden");
-  memberName.textContent = payload.name;
-  emergencyName.textContent = text(payload.emergency.emergency_contact_name);
-  emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);
-  emergencyPhone.textContent = text(payload.emergency.emergency_contact_phone);
-  emergencyPhone2.textContent = text(payload.emergency.emergency_contact_phone_2);
+  return (
+    (!query || rowText.includes(query)) &&
+    (!selectedCategory || category === selectedCategory) &&
+    (!selectedPaid || paidValue === selectedPaid)
+  );
+}
+
+function renderCategoryOptions(categories) {
+  categoryFilter.replaceChildren(
+    Object.assign(document.createElement("option"), {
+      textContent: "All categories",
+      value: "",
+    }),
+    ...categories.map((category) =>
+      Object.assign(document.createElement("option"), {
+        textContent: category,
+        value: category,
+      })
+    )
+  );
+}
+
+function tableCell(value) {
+  const cell = document.createElement("td");
+  cell.textContent = text(value);
+  return cell;
+}
+
+function renderPurchases() {
+  if (!currentMemberPayload?.found) return;
 
   purchaseGroups.replaceChildren();
-  Object.entries(payload.categories).forEach(([category, rows]) => {
+  const categories = Object.keys(currentMemberPayload.categories);
+  let visibleRows = 0;
+
+  categories.forEach((category) => {
+    const rows = currentMemberPayload.categories[category].filter((row) => purchaseMatches(row, category));
+    if (!rows.length) return;
+
     const section = document.createElement("section");
     section.className = "panel purchasePanel";
 
@@ -91,17 +126,45 @@ function renderMember(payload) {
     const tbody = table.querySelector("tbody");
     rows.forEach((row) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${text(row.date)}</td>
-        <td><span class="paidBadge ${paidClass(row.paid)}">${text(row.paid)}</span></td>
-        <td>${text(row.total)}</td>
-        <td>${text(row.items)}</td>
-      `;
+      const paidCell = document.createElement("td");
+      const paidBadge = document.createElement("span");
+      paidBadge.className = `paidBadge ${paidClass(row.paid)}`;
+      paidBadge.textContent = text(row.paid);
+
+      paidCell.append(paidBadge);
+      tr.append(tableCell(row.date), paidCell, tableCell(row.total), tableCell(row.items));
       tbody.append(tr);
+      visibleRows += 1;
     });
     section.append(table);
     purchaseGroups.append(section);
   });
+
+  filterEmptyState.classList.toggle("hidden", visibleRows > 0);
+}
+
+function renderMember(payload) {
+  currentMemberPayload = payload;
+  if (!payload.found) {
+    memberPanel.classList.add("hidden");
+    emptyState.classList.remove("hidden");
+    emptyState.textContent = "No exact member match found. Pick a name from the suggestions.";
+    return;
+  }
+
+  emptyState.classList.add("hidden");
+  memberPanel.classList.remove("hidden");
+  memberName.textContent = payload.name;
+  emergencyName.textContent = text(payload.emergency.emergency_contact_name);
+  emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);
+  emergencyPhone.textContent = text(payload.emergency.emergency_contact_phone);
+  emergencyPhone2.textContent = text(payload.emergency.emergency_contact_phone_2);
+
+  purchaseSearchInput.value = "";
+  categoryFilter.value = "";
+  paidFilter.value = "";
+  renderCategoryOptions(Object.keys(payload.categories));
+  renderPurchases();
 }
 
 async function searchMember() {
@@ -113,6 +176,15 @@ async function searchMember() {
 
 refreshButton.addEventListener("click", refreshStore);
 searchButton.addEventListener("click", searchMember);
+purchaseSearchInput.addEventListener("input", renderPurchases);
+categoryFilter.addEventListener("change", renderPurchases);
+paidFilter.addEventListener("change", renderPurchases);
+clearFiltersButton.addEventListener("click", () => {
+  purchaseSearchInput.value = "";
+  categoryFilter.value = "";
+  paidFilter.value = "";
+  renderPurchases();
+});
 nameInput.addEventListener("change", searchMember);
 nameInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") searchMember();

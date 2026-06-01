@@ -59,6 +59,29 @@
           </div>
         </div>
 
+        <div class="panel filterPanel">
+          <div>
+            <label for="purchaseSearchInput">Search purchases</label>
+            <input id="purchaseSearchInput" type="search" autocomplete="off" placeholder="Search date, paid status, total, or item">
+          </div>
+          <div>
+            <label for="categoryFilter">Category</label>
+            <select id="categoryFilter">
+              <option value="">All categories</option>
+            </select>
+          </div>
+          <div>
+            <label for="paidFilter">Paid status</label>
+            <select id="paidFilter">
+              <option value="">All statuses</option>
+              <option value="YES">Paid</option>
+              <option value="NO">Unpaid</option>
+            </select>
+          </div>
+          <button id="clearFiltersButton" class="secondaryButton" type="button">Clear</button>
+        </div>
+
+        <section id="filterEmptyState" class="empty hidden">No purchase rows match the current filters.</section>
         <div id="purchaseGroups" class="purchaseGroups"></div>
       </section>
     </main>
