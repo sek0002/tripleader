@@ -309,10 +309,9 @@ function renderMember(payload) {
   memberName.textContent = payload.name;
   const isCurrentMember = Boolean(payload.membership_status?.is_current);
   const memberLabel = isCurrentMember ? "Current Member" : "Not Current Member";
-  const icon = isCurrentMember ? "✓" : "✗";
   membershipStatus.classList.toggle("isCurrentMember", isCurrentMember);
   membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
-  membershipStatus.textContent = `${icon} ${memberLabel}`;
+  membershipStatus.innerHTML = `<span class="membershipBadge" aria-hidden="true"></span><span>${memberLabel}</span>`;
   memberEmail.textContent = text(payload.contact?.email);
   emergencyName.textContent = text(payload.emergency.emergency_contact_name);
   emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);

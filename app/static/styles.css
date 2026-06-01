@@ -214,6 +214,9 @@ button:disabled {
 .membershipStatus {
   font-size: 15px;
   font-weight: 800;
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
 }
 
 .membershipStatus.isCurrentMember {
@@ -222,6 +225,26 @@ button:disabled {
 
 .membershipStatus.isNotCurrentMember {
   color: var(--red);
+}
+
+.membershipBadge {
+  align-items: center;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  display: inline-flex;
+  height: 18px;
+  justify-content: center;
+  line-height: 1;
+  width: 18px;
+  font-weight: 900;
+}
+
+.membershipStatus.isCurrentMember .membershipBadge::before {
+  content: "✓";
+}
+
+.membershipStatus.isNotCurrentMember .membershipBadge::before {
+  content: "✗";
 }
 
 .searchDropdown {
