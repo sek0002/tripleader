@@ -309,9 +309,12 @@ function renderMember(payload) {
   memberName.textContent = payload.name;
   const isCurrentMember = Boolean(payload.membership_status?.is_current);
   const memberLabel = isCurrentMember ? "Current Member" : "Not Current Member";
+  const icon = isCurrentMember
+    ? '<span class="membershipIcon" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M5.8 10.4 9 13.4 14.3 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>'
+    : '<span class="membershipIcon" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M6.5 6.5 13.5 13.5M13.5 6.5 6.5 13.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>';
   membershipStatus.classList.toggle("isCurrentMember", isCurrentMember);
   membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
-  membershipStatus.innerHTML = `<span class="membershipBadge" aria-hidden="true"></span><span>${memberLabel}</span>`;
+  membershipStatus.innerHTML = `${icon}<span>${memberLabel}</span>`;
   memberEmail.textContent = text(payload.contact?.email);
   emergencyName.textContent = text(payload.emergency.emergency_contact_name);
   emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);

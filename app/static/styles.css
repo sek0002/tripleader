@@ -227,24 +227,19 @@ button:disabled {
   color: var(--red);
 }
 
-.membershipBadge {
+.membershipIcon {
   align-items: center;
-  border: 2px solid currentColor;
-  border-radius: 999px;
   display: inline-flex;
   height: 18px;
   justify-content: center;
-  line-height: 1;
   width: 18px;
-  font-weight: 900;
+  flex-shrink: 0;
 }
 
-.membershipStatus.isCurrentMember .membershipBadge::before {
-  content: "✓";
-}
-
-.membershipStatus.isNotCurrentMember .membershipBadge::before {
-  content: "✗";
+.membershipIcon svg {
+  display: block;
+  height: 18px;
+  width: 18px;
 }
 
 .searchDropdown {

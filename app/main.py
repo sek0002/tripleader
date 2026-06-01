@@ -130,6 +130,33 @@ def is_current_year_membership_paid(item: str, paid: Any, year: int) -> bool:
     return re.search(rf"(?<!\d){year}(?!\d)", normalized_item) is not None
 
 
+def merge_names_by_email(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return df
+
+    merged = df.copy()
+    email_to_name: dict[str, str] = {}
+    for _, row in merged.iterrows():
+        email = clean_scalar(row.get("email"))
+        if not email:
+            continue
+        name = clean_scalar(row.get("name"))
+        if not name:
+            continue
+
+        email_key = email.casefold()
+        if len(name) > len(email_to_name.get(email_key, "")):
+            email_to_name[email_key] = name
+
+    if not email_to_name:
+        return merged
+
+    for email_key, canonical_name in email_to_name.items():
+        merged.loc[merged["email"].map(lambda value: clean_scalar(value).casefold()) == email_key, "name"] = canonical_name
+
+    return merged
+
+
 def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     normalized_columns = df.columns.astype(str)
@@ -147,6 +174,7 @@ def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
     df["name_key"] = df["name"].str.casefold()
     dedupe_source = df[DEDUPLICATION_COLUMNS].astype(str).fillna("")
     df["_dedupe_key"] = dedupe_source.apply(lambda row: "||".join(row.astype(str)), axis=1)
+    df = merge_names_by_email(df)
     return df
 
 
