@@ -144,14 +144,9 @@ function closeNameSuggestions() {
 
 function renderNameSuggestions() {
   const query = nameInput.value.trim().toLowerCase();
-  if (!query) {
-    closeNameSuggestions();
-    return;
-  }
-
-  const matches = availableNames
-    .filter((name) => name.toLowerCase().includes(query))
-    .slice(0, 80);
+  const matches = query
+    ? availableNames.filter((name) => name.toLowerCase().includes(query))
+    : availableNames;
 
   if (!matches.length) {
     closeNameSuggestions();
