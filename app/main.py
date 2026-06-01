@@ -235,6 +235,14 @@ def row_year(value: Any) -> Optional[int]:
     return int(parsed.year)
 
 
+def _extract_stated_year(value: str) -> Optional[int]:
+    source = clean_scalar(value)
+    matches = re.findall(r"(?<!\d)(20\d{2})(?!\d)", source)
+    if not matches:
+        return None
+    return int(matches[-1])
+
+
 def _hire_segment(item: str) -> str:
     lowered = _strip_quantity_prefix(clean_scalar(item)).casefold()
     if "gear" in lowered or "common" in lowered or re.search(r"\bfull\b", lowered):
@@ -304,7 +312,7 @@ def _add_months(start: date, months: int) -> date:
     return date(year, month, day)
 
 
-def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, Union[str, bool]]:
+def _hire_status_for_payment_year(matches: pd.DataFrame) -> Optional[dict[str, Union[str, bool]]]:
     now = datetime.now(timezone.utc).date()
     candidates: list[tuple[date, str, int]] = []
 
@@ -323,18 +331,17 @@ def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, Union[str,
         candidates.append((paid_date, status_detail, months))
 
     if not candidates:
-        return {
-            "is_current": False,
-            "label": "Hire - Not current",
-        }
+        return None
 
     candidates.sort(reverse=True, key=lambda item: item[0])
-    paid_date, status_label, months = candidates[0]
-    valid_until = _add_months(paid_date, months)
-    return {
-        "is_current": paid_date <= now <= valid_until,
-        "label": status_label,
-    }
+    for paid_date, status_label, months in candidates:
+        valid_until = _add_months(paid_date, months)
+        if paid_date <= now <= valid_until:
+            return {
+                "is_current": True,
+                "label": status_label,
+            }
+    return None
 
 
 def is_current_year_membership_paid(item: str, paid: Any, year: int) -> bool:
@@ -352,7 +359,10 @@ def is_current_year_liability_waiver_paid(item: str, note: Any, paid: Any, year:
     source = f"{clean_scalar(item)} {clean_scalar(note)}".casefold()
     if "liability" not in source or "waiver" not in source:
         return False
-    return re.search(rf"(?<!\d){year}(?!\d)", source) is not None
+    stated_year = _extract_stated_year(source)
+    if stated_year is None:
+        return False
+    return stated_year == year
 
 
 def merge_names_by_email(df: pd.DataFrame) -> pd.DataFrame:
