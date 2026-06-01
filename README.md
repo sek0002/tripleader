@@ -1,4 +1,4 @@
-# MUUC Purchase Lookup
+# MUUC Trip Leader App
 
 FastAPI app for syncing TeamApp purchases into a local CSV beside the hosted app and looking up emergency contact and purchase details by member name.
 
