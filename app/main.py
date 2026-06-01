@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import os
+import calendar
 import re
 import threading
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -68,7 +69,11 @@ DEDUPLICATION_COLUMNS = ["purchase_id", "items"]
 
 load_dotenv(BASE_DIR / ".env")
 sync_lock = threading.Lock()
+cache_lock = threading.Lock()
 initial_sync_completed = False
+_store_cache: pd.DataFrame | None = None
+_store_cache_source: Path | None = None
+_store_cache_mtime: float | None = None
 last_sync: dict[str, Any] = {
     "ok": None,
     "message": "Not synced yet",
@@ -114,11 +119,190 @@ def clean_scalar(value: Any) -> str:
     return str(value).strip()
 
 
+def name_canonical_key(value: Any) -> str:
+    normalized = clean_scalar(value)
+    normalized = re.sub(r"[\u200b\u200c\u200d\ufeff]", "", normalized)
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.casefold()
+
+
+PURCHASE_NAME_LEAK_KEYWORDS = {
+    "air",
+    "boat",
+    "course",
+    "dive",
+    "exclusive",
+    "fee",
+    "hire",
+    "liability",
+    "merch",
+    "misc",
+    "membership",
+    "month",
+    "nitrox",
+    "tank",
+    "waiver",
+}
+
+
+def _looks_like_purchase_name_leak(value: str) -> bool:
+    lowered = value.casefold()
+    has_item_word = any(key in lowered for key in PURCHASE_NAME_LEAK_KEYWORDS)
+    return bool(has_item_word or re.search(r"\d", value))
+
+
+def _extract_name_tail(value: str) -> str:
+    tokens = re.findall(r"[A-Za-z][A-Za-z'\\-]*", value)
+    if len(tokens) < 2:
+        return ""
+
+    stopwords = {keyword for keyword in PURCHASE_NAME_LEAK_KEYWORDS}
+    stopwords.update({"and", "for", "with", "on", "to", "at", "from", "in", "of", "the"})
+
+    name_parts: list[str] = []
+    for token in reversed(tokens):
+        if token.casefold() in stopwords:
+            break
+        name_parts.append(token)
+        if len(name_parts) == 4:
+            break
+
+    if len(name_parts) < 2:
+        return ""
+
+    candidate = " ".join(reversed(name_parts))
+    if _looks_like_purchase_name_leak(candidate):
+        return ""
+    return re.sub(r"\s+", " ", candidate).strip()
+
+
+def _choose_better_name(current: str, candidate: str) -> bool:
+    if not candidate:
+        return False
+    if not current:
+        return True
+
+    current_leak = _looks_like_purchase_name_leak(current)
+    candidate_leak = _looks_like_purchase_name_leak(candidate)
+    if current_leak != candidate_leak:
+        return not candidate_leak
+
+    return _is_preferred_name(current, candidate)
+
+
+def normalize_member_name(value: Any) -> str:
+    candidate = clean_scalar(value)
+    if not candidate:
+        return ""
+
+    candidate = re.sub(r"[\u200b\u200c\u200d\ufeff]", "", candidate)
+    candidate = _strip_quantity_prefix(candidate)
+    candidate = re.sub(r"\s+", " ", candidate).strip()
+    if candidate:
+        candidate = re.sub(r"\d+x\s+", "", candidate, flags=re.I)
+
+    if _looks_like_purchase_name_leak(candidate):
+        extracted = _extract_name_tail(candidate)
+        if extracted:
+            candidate = extracted
+
+    return re.sub(r"\s+", " ", candidate).strip()
+
+
+def _is_preferred_name(current: str, candidate: str) -> bool:
+    if len(candidate) > len(current):
+        return True
+    if len(candidate) == len(current):
+        # Prefer standard capitalised names when length is the same.
+        current_score = sum(ch.isupper() for ch in current)
+        candidate_score = sum(ch.isupper() for ch in candidate)
+        return candidate_score > current_score and candidate.strip() != current.strip()
+    return False
+
+
+def _strip_quantity_prefix(value: str) -> str:
+    text = clean_scalar(value)
+    if not text:
+        return text
+    text = re.sub(r"^\s*\d+\s*x\s*\d+\s*[.\-:]?\s*", "", text).strip()
+    return re.sub(r"^\s*\d+\s*x\s*[.\-:]?\s*", "", text).strip()
+
+
 def row_year(value: Any) -> int | None:
     parsed = pd.to_datetime(value, errors="coerce")
     if pd.isna(parsed):
         return None
     return int(parsed.year)
+
+
+def _normalized_hire_duration(item: str) -> tuple[str, int] | None:
+    lowered = _strip_quantity_prefix(item).casefold()
+    if "hire" not in lowered:
+        return None
+
+    if "half year" in lowered:
+        return ("Half year", 6)
+    if "half-year" in lowered:
+        return ("Half year", 6)
+    if re.search(r"\b6\s*[-/]?(?:month|months)\b", lowered):
+        return ("Half year", 6)
+
+    if (
+        re.search(r"\b12\s*[-/]?(?:month|months)\b", lowered)
+        or "yearly" in lowered
+        or "annual" in lowered
+        or "year" in lowered
+    ):
+        return ("Year", 12)
+
+    return None
+
+
+def _parse_date_or_none(value: Any) -> date | None:
+    parsed = pd.to_datetime(value, errors="coerce")
+    if pd.isna(parsed):
+        return None
+    return parsed.date()
+
+
+def _add_months(start: date, months: int) -> date:
+    total = start.month - 1 + months
+    year = start.year + (total // 12)
+    month = (total % 12) + 1
+    day = min(start.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, str | bool]:
+    now = datetime.now(timezone.utc).date()
+    candidates: list[tuple[date, str, int]] = []
+
+    for _, row in matches.iterrows():
+        if clean_scalar(row.get("paid")).strip().casefold() != "yes":
+            continue
+        description = f"{clean_scalar(row.get('items'))} {clean_scalar(row.get('note'))}".strip()
+        duration = _normalized_hire_duration(description)
+        if duration is None:
+            continue
+        paid_date = _parse_date_or_none(row.get("date"))
+        if paid_date is None:
+            continue
+        label, months = duration
+        candidates.append((paid_date, label, months))
+
+    if not candidates:
+        return {
+            "is_current": False,
+            "label": "Hire - Not current",
+        }
+
+    candidates.sort(reverse=True, key=lambda item: item[0])
+    paid_date, label, months = candidates[0]
+    valid_until = _add_months(paid_date, months)
+    return {
+        "is_current": paid_date <= now <= valid_until,
+        "label": f"Hire - {label}",
+    }
 
 
 def is_current_year_membership_paid(item: str, paid: Any, year: int) -> bool:
@@ -140,12 +324,23 @@ def merge_names_by_email(df: pd.DataFrame) -> pd.DataFrame:
         email = clean_scalar(row.get("email"))
         if not email:
             continue
-        name = clean_scalar(row.get("name"))
+
+        name = normalize_member_name(row.get("name"))
+        name_candidates = [name]
+        if not name or _looks_like_purchase_name_leak(name):
+            note_name = normalize_member_name(row.get("note"))
+            if note_name:
+                name_candidates.append(note_name)
+
+        name = ""
+        for candidate in name_candidates:
+            if _choose_better_name(name, candidate):
+                name = candidate
         if not name:
             continue
 
         email_key = email.casefold()
-        if len(name) > len(email_to_name.get(email_key, "")):
+        if _choose_better_name(email_to_name.get(email_key, ""), name):
             email_to_name[email_key] = name
 
     if not email_to_name:
@@ -171,6 +366,7 @@ def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
     for column in DISPLAY_COLUMNS:
         df[column] = df[column].map(clean_scalar)
 
+    df["name"] = df["name"].map(normalize_member_name)
     df["name_key"] = df["name"].str.casefold()
     dedupe_source = df[DEDUPLICATION_COLUMNS].astype(str).fillna("")
     df["_dedupe_key"] = dedupe_source.apply(lambda row: "||".join(row.astype(str)), axis=1)
@@ -178,17 +374,44 @@ def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _store_source() -> Path | None:
+    if STORE_PATH.exists():
+        return STORE_PATH
+    if LEGACY_PURCHASES_PATH.exists():
+        return LEGACY_PURCHASES_PATH
+    return None
+
+
+def _invalidate_store_cache() -> None:
+    global _store_cache, _store_cache_source, _store_cache_mtime
+    _store_cache = None
+    _store_cache_source = None
+    _store_cache_mtime = None
+
+
 def load_store() -> pd.DataFrame:
-    source = STORE_PATH if STORE_PATH.exists() else LEGACY_PURCHASES_PATH
-    if not source.exists():
+    source = _store_source()
+    if source is None or not source.exists():
         return normalize_frame(pd.DataFrame())
-    return normalize_frame(pd.read_csv(source, dtype=str, keep_default_na=False))
+
+    current_mtime = source.stat().st_mtime
+    with cache_lock:
+        if _store_cache is not None and _store_cache_source == source and _store_cache_mtime == current_mtime:
+            return _store_cache
+
+    df = normalize_frame(pd.read_csv(source, dtype=str, keep_default_na=False))
+    with cache_lock:
+        _store_cache = df
+        _store_cache_source = source
+        _store_cache_mtime = current_mtime
+    return df
 
 
 def save_store(df: pd.DataFrame) -> None:
     DATA_DIR.mkdir(exist_ok=True)
     output = df.drop(columns=["name_key", "_dedupe_key"], errors="ignore")
     output.to_csv(STORE_PATH, index=False)
+    _invalidate_store_cache()
 
 
 def deduplicate_purchases(df: pd.DataFrame, keep: str = "first") -> pd.DataFrame:
@@ -255,9 +478,14 @@ def fetch_remote_purchases(page_range: range = TEAMAPP_PAGE_RANGE) -> pd.DataFra
 
 def sync_purchases(force: bool = False) -> dict[str, Any]:
     global initial_sync_completed
-    page_range = TEAMAPP_REFRESH_PAGE_RANGE if (force or initial_sync_completed) else TEAMAPP_PAGE_RANGE
     with sync_lock:
         existing = deduplicate_purchases(load_store(), keep="first")
+        has_existing_data = not existing.empty
+        page_range = (
+            TEAMAPP_REFRESH_PAGE_RANGE
+            if (force or initial_sync_completed or has_existing_data)
+            else TEAMAPP_PAGE_RANGE
+        )
         try:
             fresh = fetch_remote_purchases(page_range=page_range)
             existing_count = len(existing)
@@ -307,15 +535,23 @@ def category_for_item(item: str) -> str:
 
 def names_from_store() -> list[str]:
     df = load_store()
+    email_to_name: dict[str, str] = {}
     grouped_names: dict[str, str] = {}
     for _, row in df.iterrows():
-        name = clean_scalar(row.get("name"))
+        name = normalize_member_name(row.get("name"))
         if not name:
             continue
         email = clean_scalar(row.get("email")).casefold()
-        key = f"email:{email}" if email else f"name:{name.casefold()}"
-        if len(name) > len(grouped_names.get(key, "")):
-            grouped_names[key] = name
+        if email:
+            if _is_preferred_name(email_to_name.get(email, ""), name):
+                email_to_name[email] = name
+        else:
+            key = name_canonical_key(name)
+            if _is_preferred_name(grouped_names.get(key, ""), name):
+                grouped_names[key] = name
+
+    for name in email_to_name.values():
+        grouped_names[name_canonical_key(name)] = name
 
     names = sorted(grouped_names.values(), key=str.casefold)
     return names
@@ -323,8 +559,10 @@ def names_from_store() -> list[str]:
 
 def member_summary(name: str) -> dict[str, Any]:
     df = load_store()
-    name_key = name.strip().casefold()
+    name_key = name_canonical_key(name)
     matches = df[df["name_key"] == name_key].copy()
+    if matches.empty:
+        matches = df[df["name"].map(name_canonical_key) == name_key].copy()
     if matches.empty:
         return {"found": False, "name": name, "emergency": {}, "categories": {}}
 
@@ -337,8 +575,9 @@ def member_summary(name: str) -> dict[str, Any]:
 
     payment_year = datetime.now(timezone.utc).year
     payment_year_matches = matches[matches["date"].map(row_year).eq(payment_year)].copy()
+    hire_status_matches = matches.copy()
 
-    merged_names = [clean_scalar(value) for value in matches["name"]]
+    merged_names = [normalize_member_name(value) for value in matches["name"]]
     merged_name = max((value for value in merged_names if value), key=len, default=name)
     latest = matches.iloc[0]
     contact = {
@@ -355,18 +594,20 @@ def member_summary(name: str) -> dict[str, Any]:
         is_current_year_membership_paid(clean_scalar(row.get("items")), row.get("paid"), payment_year)
         for _, row in payment_year_matches.iterrows()
     )
+    hire_status = _hire_status_for_payment_year(hire_status_matches)
 
     grouped: dict[str, list[dict[str, str]]] = {category: [] for category, _ in CATEGORIES}
     for _, row in payment_year_matches.iterrows():
         category = category_for_item(clean_scalar(row.get("items")))
         if category not in grouped:
             continue
+        item_text = _strip_quantity_prefix(clean_scalar(row.get("items")))
         grouped.setdefault(category, []).append(
             {
                 "date": clean_scalar(row.get("date")),
                 "paid": clean_scalar(row.get("paid")),
                 "total": clean_scalar(row.get("total")),
-                "items": clean_scalar(row.get("items")),
+                "items": item_text,
             }
         )
 
@@ -378,8 +619,9 @@ def member_summary(name: str) -> dict[str, Any]:
         "emergency": emergency,
         "membership_status": {
             "is_current": current_member,
-            "label": "Current Member" if current_member else "Not Current Member",
+            "label": "Current Member",
         },
+        "hire_status": hire_status,
         "categories": grouped,
     }
 

@@ -10,6 +10,7 @@ const emptyState = document.querySelector("#emptyState");
 const memberPanel = document.querySelector("#memberPanel");
 const memberName = document.querySelector("#memberName");
 const membershipStatus = document.querySelector("#membershipStatus");
+const hireStatus = document.querySelector("#hireStatus");
 const memberEmail = document.querySelector("#memberEmail");
 const emergencyName = document.querySelector("#emergencyName");
 const emergencyRelationship = document.querySelector("#emergencyRelationship");
@@ -44,6 +45,14 @@ function closeMenu() {
 
 function text(value) {
   return value && String(value).trim() ? String(value).trim() : "Not supplied";
+}
+
+function statusMarkup(isCurrent, label) {
+  const icon = isCurrent
+    ? '<span class="membershipIcon" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M5.8 10.4 9 13.4 14.3 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>'
+    : '<span class="membershipIcon" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M6.5 6.5 13.5 13.5M13.5 6.5 6.5 13.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>';
+
+  return `${icon}<span>${label}</span>`;
 }
 
 function setStatus(payload) {
@@ -308,18 +317,24 @@ function renderMember(payload) {
   memberPanel.classList.remove("hidden");
   memberName.textContent = payload.name;
   const isCurrentMember = Boolean(payload.membership_status?.is_current);
-  const memberLabel = isCurrentMember ? "Current Member" : "Not Current Member";
-  const icon = isCurrentMember
-    ? '<span class="membershipIcon" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M5.8 10.4 9 13.4 14.3 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>'
-    : '<span class="membershipIcon" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M6.5 6.5 13.5 13.5M13.5 6.5 6.5 13.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>';
   membershipStatus.classList.toggle("isCurrentMember", isCurrentMember);
   membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
-  membershipStatus.innerHTML = `${icon}<span>${memberLabel}</span>`;
+  membershipStatus.innerHTML = statusMarkup(isCurrentMember, "Current Member");
   memberEmail.textContent = text(payload.contact?.email);
   emergencyName.textContent = text(payload.emergency.emergency_contact_name);
   emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);
   emergencyPhone.textContent = text(payload.emergency.emergency_contact_phone);
   emergencyPhone2.textContent = text(payload.emergency.emergency_contact_phone_2);
+
+  if (payload.hire_status?.label) {
+    const isCurrentHire = Boolean(payload.hire_status?.is_current);
+    hireStatus.classList.toggle("isCurrentMember", isCurrentHire);
+    hireStatus.classList.toggle("isNotCurrentMember", !isCurrentHire);
+    hireStatus.innerHTML = statusMarkup(isCurrentHire, payload.hire_status.label);
+    hireStatus.classList.remove("hidden");
+  } else {
+    hireStatus.classList.add("hidden");
+  }
 
   purchaseSearchInput.value = "";
   categoryFilter.value = "";
