@@ -204,6 +204,36 @@ button:disabled {
   display: none;
 }
 
+.searchDropdown {
+  margin-top: 0;
+}
+
+.searchDropdownContent {
+  margin-top: 8px;
+}
+
+.searchDropdownSummary {
+  background: var(--secondary);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+  list-style: none;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  width: 100%;
+}
+
+.searchDropdownSummary::-webkit-details-marker {
+  display: none;
+}
+
+.searchDropdown + .searchDropdown {
+  margin-top: 16px;
+}
+
 .lookup {
   margin-bottom: 18px;
 }
