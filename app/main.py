@@ -113,7 +113,9 @@ def clean_scalar(value: Any) -> str:
 
 def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
+    normalized_columns = df.columns.astype(str)
+    df.columns = normalized_columns
+    df = df.loc[:, ~normalized_columns.str.startswith("Unnamed")]
 
     for column in DISPLAY_COLUMNS:
         if column not in df.columns:
