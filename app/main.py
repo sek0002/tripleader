@@ -25,7 +25,8 @@ STORE_PATH = BASE_DIR / "purchases.csv"
 LEGACY_PURCHASES_PATH = DATA_DIR / "purchases.csv"
 TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json"
 TEAMAPP_PAGE_PARAM = "page"
-TEAMAPP_PAGE_RANGE = range(1, 4)
+TEAMAPP_PAGE_RANGE = range(1, 7)
+TEAMAPP_REFRESH_PAGE_RANGE = range(1, 2)
 SYNC_INTERVAL_SECONDS = 60 * 60
 
 CATEGORIES = [
@@ -184,9 +185,9 @@ def build_headers() -> dict[str, str]:
     }
 
 
-def fetch_remote_purchases() -> pd.DataFrame:
+def fetch_remote_purchases(page_range: range = TEAMAPP_PAGE_RANGE) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
-    for page in TEAMAPP_PAGE_RANGE:
+    for page in page_range:
         response = requests.get(
             TEAMAPP_URL,
             headers=build_headers(),
@@ -207,11 +208,11 @@ def fetch_remote_purchases() -> pd.DataFrame:
 
 
 def sync_purchases(force: bool = False) -> dict[str, Any]:
-    del force
+    page_range = TEAMAPP_REFRESH_PAGE_RANGE if force else TEAMAPP_PAGE_RANGE
     with sync_lock:
         existing = deduplicate_purchases(load_store(), keep="first")
         try:
-            fresh = fetch_remote_purchases()
+            fresh = fetch_remote_purchases(page_range=page_range)
             existing_count = len(existing)
             merged = pd.concat([existing, fresh], ignore_index=True)
             merged = deduplicate_purchases(merged, keep="first")
