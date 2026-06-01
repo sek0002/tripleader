@@ -1,5 +1,12 @@
 const syncStatus = document.querySelector("#syncStatus");
-const lastCheckedStatus = document.querySelector("#lastCheckedStatus");
+let lastCheckedStatus = document.querySelector("#lastCheckedStatus");
+if (!lastCheckedStatus && syncStatus) {
+  lastCheckedStatus = document.createElement("p");
+  lastCheckedStatus.id = "lastCheckedStatus";
+  lastCheckedStatus.className = "lastCheckedStatus";
+  lastCheckedStatus.textContent = "Last checked: loading...";
+  syncStatus.insertAdjacentElement("afterend", lastCheckedStatus);
+}
 const dateRangeStatus = document.querySelector("#dateRangeStatus");
 const menuButton = document.querySelector("#menuButton");
 const pageMenu = document.querySelector("#pageMenu");

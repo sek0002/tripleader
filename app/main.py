@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import calendar
+import json
 import re
 import threading
 import time
@@ -25,11 +26,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 STORE_PATH = BASE_DIR / "purchases.csv"
 LEGACY_PURCHASES_PATH = DATA_DIR / "purchases.csv"
+SYNC_STATE_PATH = BASE_DIR / "purchases.sync.json"
 TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json"
 TEAMAPP_PAGE_PARAM = "page"
 TEAMAPP_PAGE_RANGE = range(1, 7)
 TEAMAPP_REFRESH_PAGE_RANGE = range(1, 2)
 SYNC_INTERVAL_SECONDS = 60 * 60
+SYNC_STALE_SECONDS = 15 * 60
 
 CATEGORIES = [
     ("Hire", ["hire"]),
@@ -450,6 +453,54 @@ def _invalidate_store_cache() -> None:
     _store_cache_mtime = None
 
 
+def _parse_stored_sync_time(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _last_synced_at() -> Optional[datetime]:
+    if SYNC_STATE_PATH.exists():
+        try:
+            payload = json.loads(SYNC_STATE_PATH.read_text(encoding="utf-8"))
+            synced_at = _parse_stored_sync_time(payload.get("at"))
+            if synced_at is not None:
+                return synced_at
+        except Exception:
+            pass
+
+    source = _store_source()
+    if source is None or not source.exists():
+        return None
+    try:
+        return datetime.fromtimestamp(source.stat().st_mtime, tz=timezone.utc)
+    except Exception:
+        return None
+
+
+def _persist_sync_state(rows: int, at: datetime) -> None:
+    try:
+        SYNC_STATE_PATH.write_text(
+            json.dumps({"at": at.isoformat(), "rows": rows}, sort_keys=True),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+
+
+def _is_sync_stale(now: datetime) -> bool:
+    synced_at = _last_synced_at()
+    if synced_at is None:
+        return True
+    return (now - synced_at).total_seconds() >= SYNC_STALE_SECONDS
+
+
 def load_store() -> pd.DataFrame:
     global _store_cache, _store_cache_source, _store_cache_mtime
     source = _store_source()
@@ -543,6 +594,18 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
     with sync_lock:
         existing = deduplicate_purchases(load_store(), keep="first")
         has_existing_data = not existing.empty
+        now = datetime.now(timezone.utc)
+        if not force and has_existing_data and not _is_sync_stale(now):
+            status = {
+                "ok": True,
+                "message": "Using cached purchase data (checked less than 15 minutes ago).",
+                "rows": int(len(existing)),
+                "at": _last_synced_at().isoformat() if _last_synced_at() else now.isoformat(),
+            }
+            last_sync.update(status)
+            result = dict(last_sync)
+            result["date_range"] = purchase_date_range(load_store())
+            return result
         page_range = (
             TEAMAPP_REFRESH_PAGE_RANGE
             if (force or initial_sync_completed or has_existing_data)
@@ -562,15 +625,18 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
                     f"stored {len(merged)} unique purchase/item rows"
                 ),
                 "rows": int(len(merged)),
-                "at": datetime.now(timezone.utc).isoformat(),
+                "at": now.isoformat(),
             }
+            _persist_sync_state(len(merged), now)
         except Exception as exc:
             save_store(existing)
+            if has_existing_data:
+                _persist_sync_state(len(existing), now)
             status = {
                 "ok": False,
                 "message": str(exc),
                 "rows": int(len(existing)),
-                "at": datetime.now(timezone.utc).isoformat(),
+                "at": now.isoformat(),
             }
         finally:
             initial_sync_completed = True
