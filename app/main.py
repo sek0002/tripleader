@@ -67,6 +67,7 @@ DEDUPLICATION_COLUMNS = ["purchase_id", "items"]
 
 load_dotenv(BASE_DIR / ".env")
 sync_lock = threading.Lock()
+initial_sync_completed = False
 last_sync: dict[str, Any] = {
     "ok": None,
     "message": "Not synced yet",
@@ -208,7 +209,8 @@ def fetch_remote_purchases(page_range: range = TEAMAPP_PAGE_RANGE) -> pd.DataFra
 
 
 def sync_purchases(force: bool = False) -> dict[str, Any]:
-    page_range = TEAMAPP_REFRESH_PAGE_RANGE if force else TEAMAPP_PAGE_RANGE
+    global initial_sync_completed
+    page_range = TEAMAPP_REFRESH_PAGE_RANGE if (force or initial_sync_completed) else TEAMAPP_PAGE_RANGE
     with sync_lock:
         existing = deduplicate_purchases(load_store(), keep="first")
         try:
@@ -235,6 +237,8 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
                 "rows": int(len(existing)),
                 "at": datetime.now(timezone.utc).isoformat(),
             }
+        finally:
+            initial_sync_completed = True
 
         last_sync.update(status)
         result = dict(last_sync)
