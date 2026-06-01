@@ -81,6 +81,13 @@ h3 {
   margin-bottom: 12px;
 }
 
+h2 {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 #syncStatus,
 #dateRangeStatus {
   color: var(--muted);
@@ -202,6 +209,19 @@ button:disabled {
 
 .memberInfoSummary::-webkit-details-marker {
   display: none;
+}
+
+.membershipStatus {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.membershipStatus.isCurrentMember {
+  color: var(--green);
+}
+
+.membershipStatus.isNotCurrentMember {
+  color: var(--red);
 }
 
 .searchDropdown {

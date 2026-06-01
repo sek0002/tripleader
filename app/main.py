@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import threading
 import time
 from contextlib import asynccontextmanager
@@ -111,6 +112,22 @@ def clean_scalar(value: Any) -> str:
     if pd.isna(value):
         return ""
     return str(value).strip()
+
+
+def row_year(value: Any) -> int | None:
+    parsed = pd.to_datetime(value, errors="coerce")
+    if pd.isna(parsed):
+        return None
+    return int(parsed.year)
+
+
+def is_current_year_membership_paid(item: str, paid: Any, year: int) -> bool:
+    if clean_scalar(paid).strip().casefold() != "yes":
+        return False
+    normalized_item = clean_scalar(item).casefold()
+    if "membership" not in normalized_item:
+        return False
+    return re.search(rf"(?<!\d){year}(?!\d)", normalized_item) is not None
 
 
 def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
@@ -290,6 +307,9 @@ def member_summary(name: str) -> dict[str, Any]:
         if not matched_by_email.empty:
             matches = matched_by_email
 
+    payment_year = datetime.now(timezone.utc).year
+    payment_year_matches = matches[matches["date"].map(row_year).eq(payment_year)].copy()
+
     merged_names = [clean_scalar(value) for value in matches["name"]]
     merged_name = max((value for value in merged_names if value), key=len, default=name)
     latest = matches.iloc[0]
@@ -303,8 +323,13 @@ def member_summary(name: str) -> dict[str, Any]:
         "emergency_contact_phone_2": clean_scalar(latest.get("emergency_contact_phone_2")),
     }
 
+    current_member = any(
+        is_current_year_membership_paid(clean_scalar(row.get("items")), row.get("paid"), payment_year)
+        for _, row in payment_year_matches.iterrows()
+    )
+
     grouped: dict[str, list[dict[str, str]]] = {category: [] for category, _ in CATEGORIES}
-    for _, row in matches.iterrows():
+    for _, row in payment_year_matches.iterrows():
         category = category_for_item(clean_scalar(row.get("items")))
         if category not in grouped:
             continue
@@ -323,6 +348,10 @@ def member_summary(name: str) -> dict[str, Any]:
         "name": merged_name,
         "contact": contact,
         "emergency": emergency,
+        "membership_status": {
+            "is_current": current_member,
+            "label": "Current Member" if current_member else "Not Current Member",
+        },
         "categories": grouped,
     }
 
