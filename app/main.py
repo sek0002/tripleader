@@ -25,7 +25,7 @@ STORE_PATH = BASE_DIR / "purchases.csv"
 LEGACY_PURCHASES_PATH = DATA_DIR / "purchases.csv"
 TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json"
 TEAMAPP_PAGE_PARAM = "page"
-TEAMAPP_PAGE_RANGE = range(1, 7)
+TEAMAPP_PAGE_RANGE = range(1, 4)
 SYNC_INTERVAL_SECONDS = 60 * 60
 
 CATEGORIES = [
