@@ -21,9 +21,11 @@
       <section class="toolbar">
         <div class="toolbarStatus">
           <h1>MUUC Trip Leader App</h1>
-          <p id="syncStatus">{{ sync_status_text | default("Preparing purchase store...") }}</p>
-          <p id="lastCheckedStatus" class="lastCheckedStatus" data-last-checked-at="{{ last_checked_at | default("") }}">{{ last_checked_text | default("Last checked: loading...") }}</p>
-          <p id="dateRangeStatus" class="hidden">Available date range: checking data...</p>
+          <div class="syncStatusPanel">
+            <p id="syncStatus">{{ sync_status_text | default("Preparing purchase store...") }}</p>
+            <p id="lastCheckedStatus" class="lastCheckedStatus" data-last-checked-at="{{ last_checked_at | default("") }}">{{ last_checked_text | default("Last checked: loading...") }}</p>
+            <p id="dateRangeStatus" class="hidden">Available date range: checking data...</p>
+          </div>
         </div>
         <div class="topActions">
           <button id="refreshButton" type="button">Refresh</button>
@@ -56,38 +58,40 @@
         <div class="panel">
           <h2 class="memberNameLine">
             <span id="memberName"></span>
+          </h2>
+          <div class="memberStatusRow" aria-live="polite">
             <span id="membershipStatus" class="membershipStatus" aria-live="polite"></span>
             <span id="liabilityWaiverStatus" class="membershipStatus" aria-live="polite"></span>
             <span id="hireStatus" class="membershipStatus hidden" aria-live="polite"></span>
-          </h2>
+          </div>
           <details id="memberInfo" class="memberInfo">
             <summary class="memberInfoSummary">Member information</summary>
             <div class="panel">
               <div class="grid memberInfoGrid">
                 <div class="memberInfoCard memberInfoCard--stacked">
-                  <div>
+                  <div class="memberInfoField">
                     <span>Phone</span>
                     <strong id="memberPhone"></strong>
                   </div>
-                  <div>
+                  <div class="memberInfoField">
                     <span>Email</span>
                     <strong id="memberEmail"></strong>
                   </div>
                 </div>
                 <div class="memberInfoCard memberInfoCard--stack">
-                  <div>
+                  <div class="memberInfoField">
                     <span>Emergency contact</span>
                     <strong id="emergencyName"></strong>
                   </div>
-                  <div>
+                  <div class="memberInfoField">
                     <span>Relationship</span>
                     <strong id="emergencyRelationship"></strong>
                   </div>
-                  <div>
+                  <div class="memberInfoField">
                     <span>Phone</span>
                     <strong id="emergencyPhone"></strong>
                   </div>
-                  <div>
+                  <div class="memberInfoField">
                     <span>Alternate phone</span>
                     <strong id="emergencyPhone2"></strong>
                   </div>
