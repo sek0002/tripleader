@@ -98,8 +98,7 @@ h2 {
   gap: 12px;
 }
 
-#syncStatus,
-#dateRangeStatus {
+#syncStatus {
   color: var(--muted);
   display: block;
   margin-top: 0;
@@ -114,10 +113,6 @@ h2 {
   color: hsl(var(--freshnessHue, 120), 72%, 45%);
   overflow-wrap: anywhere;
   transition: color 300ms ease;
-}
-
-#dateRangeStatus {
-  font-weight: 700;
 }
 
 button {

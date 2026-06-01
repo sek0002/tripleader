@@ -7,7 +7,6 @@ if (!lastCheckedStatus && syncStatus) {
   lastCheckedStatus.textContent = "Last checked: loading...";
   syncStatus.insertAdjacentElement("afterend", lastCheckedStatus);
 }
-const dateRangeStatus = document.querySelector("#dateRangeStatus");
 const menuButton = document.querySelector("#menuButton");
 const pageMenu = document.querySelector("#pageMenu");
 const refreshButton = document.querySelector("#refreshButton");
@@ -103,7 +102,6 @@ function setStatus(payload) {
   const parsedLastCheckedAt = payload.at ? Date.parse(payload.at) : NaN;
   lastCheckedAtMs = Number.isFinite(parsedLastCheckedAt) ? parsedLastCheckedAt : null;
   applyFreshnessTone();
-  dateRangeStatus.textContent = payload.date_range?.label || "Available date range: unavailable";
 }
 
 async function refreshStore() {

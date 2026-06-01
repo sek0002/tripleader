@@ -1,4 +1,4 @@
-const CACHE_NAME = "muuc-tripleader-cache-v5";
+const CACHE_NAME = "muuc-tripleader-cache-v6";
 const APP_SHELL = [
   "/",
   "/static/styles.css",
