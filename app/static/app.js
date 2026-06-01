@@ -334,11 +334,11 @@ function renderMember(payload) {
   emergencyPhone.textContent = text(payload.emergency.emergency_contact_phone);
   emergencyPhone2.textContent = text(payload.emergency.emergency_contact_phone_2);
 
-  if (payload.hire_status?.label) {
-    const isCurrentHire = Boolean(payload.hire_status?.is_current);
-    hireStatus.classList.toggle("isCurrentMember", isCurrentHire);
-    hireStatus.classList.toggle("isNotCurrentMember", !isCurrentHire);
-    hireStatus.innerHTML = statusMarkup(isCurrentHire, payload.hire_status.label);
+  const isCurrentHire = Boolean(payload.hire_status?.is_current);
+  if (isCurrentHire) {
+    hireStatus.classList.toggle("isCurrentMember", true);
+    hireStatus.classList.toggle("isNotCurrentMember", false);
+    hireStatus.innerHTML = statusMarkup(true, payload.hire_status?.label || "Hire");
     hireStatus.classList.remove("hidden");
   } else {
     hireStatus.classList.add("hidden");
