@@ -16,8 +16,6 @@ const emergencyPhone = document.querySelector("#emergencyPhone");
 const emergencyPhone2 = document.querySelector("#emergencyPhone2");
 const purchaseSearchInput = document.querySelector("#purchaseSearchInput");
 const categoryFilter = document.querySelector("#categoryFilter");
-const dateFromFilter = document.querySelector("#dateFromFilter");
-const dateToFilter = document.querySelector("#dateToFilter");
 const paidFilter = document.querySelector("#paidFilter");
 const clearFiltersButton = document.querySelector("#clearFiltersButton");
 const filterEmptyState = document.querySelector("#filterEmptyState");
@@ -81,26 +79,15 @@ function paidClass(value) {
 function purchaseMatches(row, category) {
   const query = purchaseSearchInput.value.trim().toLowerCase();
   const selectedCategory = categoryFilter.value;
-  const selectedFromDate = dateFromFilter.value;
-  const selectedToDate = dateToFilter.value;
   const selectedPaid = paidFilter.value;
   const rowText = [row.date, row.paid, row.total, row.items].map(text).join(" ").toLowerCase();
-  const rowDate = rowDateIso(row.date);
   const paidValue = String(row.paid || "").trim().toUpperCase();
 
   return (
     (!query || rowText.includes(query)) &&
     (!selectedCategory || category === selectedCategory) &&
-    (!selectedFromDate || rowDate >= selectedFromDate) &&
-    (!selectedToDate || rowDate <= selectedToDate) &&
     (!selectedPaid || paidValue === selectedPaid)
   );
-}
-
-function rowDateIso(value) {
-  const timestamp = Date.parse(value);
-  if (Number.isNaN(timestamp)) return "";
-  return new Date(timestamp).toISOString().slice(0, 10);
 }
 
 function parseDate(value) {
@@ -184,17 +171,6 @@ function renderCategoryOptions(categories) {
       })
     )
   );
-}
-
-function configureDateRange(categories) {
-  const dates = Object.values(categories).flat().map((row) => rowDateIso(row.date)).filter(Boolean).sort();
-  const minDate = dates[0] || "";
-  const maxDate = dates.at(-1) || "";
-
-  [dateFromFilter, dateToFilter].forEach((input) => {
-    input.min = minDate;
-    input.max = maxDate;
-  });
 }
 
 function tableCell(value) {
@@ -303,12 +279,9 @@ function renderMember(payload) {
 
   purchaseSearchInput.value = "";
   categoryFilter.value = "";
-  dateFromFilter.value = "";
-  dateToFilter.value = "";
   paidFilter.value = "";
   tableSorts = {};
   renderCategoryOptions(Object.keys(payload.categories));
-  configureDateRange(payload.categories);
   renderPurchases();
 }
 
@@ -344,14 +317,10 @@ refreshButton.addEventListener("click", refreshStore);
 searchButton.addEventListener("click", searchMember);
 purchaseSearchInput.addEventListener("input", renderPurchases);
 categoryFilter.addEventListener("change", renderPurchases);
-dateFromFilter.addEventListener("change", renderPurchases);
-dateToFilter.addEventListener("change", renderPurchases);
 paidFilter.addEventListener("change", renderPurchases);
 clearFiltersButton.addEventListener("click", () => {
   purchaseSearchInput.value = "";
   categoryFilter.value = "";
-  dateFromFilter.value = "";
-  dateToFilter.value = "";
   paidFilter.value = "";
   renderPurchases();
 });
