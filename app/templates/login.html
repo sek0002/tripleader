@@ -4,9 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login | MUUC Purchase Lookup</title>
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "light";
+    </script>
     <link rel="stylesheet" href="/static/styles.css">
   </head>
   <body class="loginPage">
+    <button class="themeToggle floatingThemeToggle" type="button" data-theme-toggle aria-label="Switch to dark mode">Dark</button>
     <main class="loginShell">
       <section class="loginPanel">
         <h1>MUUC Purchase Lookup</h1>
@@ -20,5 +24,6 @@
         </form>
       </section>
     </main>
+    <script src="/static/theme.js"></script>
   </body>
 </html>
