@@ -23,6 +23,13 @@ const filterEmptyState = document.querySelector("#filterEmptyState");
 const purchaseGroups = document.querySelector("#purchaseGroups");
 
 let currentMemberPayload = null;
+let tableSorts = {};
+const sortableColumns = [
+  { key: "date", label: "Date", firstDirection: "desc" },
+  { key: "paid", label: "Paid", firstDirection: "asc" },
+  { key: "total", label: "Total", firstDirection: "desc" },
+  { key: "items", label: "Items", firstDirection: "asc" },
+];
 
 function setMenuOpen(open) {
   pageMenu.classList.toggle("hidden", !open);
@@ -90,6 +97,41 @@ function purchaseMatches(row, category) {
   );
 }
 
+function parseDate(value) {
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function parseMoney(value) {
+  const amount = Number.parseFloat(String(value || "").replace(/[^0-9.-]/g, ""));
+  return Number.isNaN(amount) ? 0 : amount;
+}
+
+function sortValue(row, key) {
+  if (key === "date") return parseDate(row.date);
+  if (key === "total") return parseMoney(row.total);
+  return String(row[key] || "").trim().toLowerCase();
+}
+
+function sortedRows(category, rows) {
+  const sort = tableSorts[category];
+  if (!sort) return rows;
+
+  return [...rows].sort((left, right) => {
+    const leftValue = sortValue(left, sort.key);
+    const rightValue = sortValue(right, sort.key);
+    let comparison = 0;
+
+    if (typeof leftValue === "number" && typeof rightValue === "number") {
+      comparison = leftValue - rightValue;
+    } else {
+      comparison = leftValue.localeCompare(rightValue);
+    }
+
+    return sort.direction === "asc" ? comparison : -comparison;
+  });
+}
+
 function renderCategoryOptions(categories) {
   categoryFilter.replaceChildren(
     Object.assign(document.createElement("option"), {
@@ -127,6 +169,43 @@ function tableCell(value) {
   return cell;
 }
 
+function renderTableHead(category) {
+  const thead = document.createElement("thead");
+  const tr = document.createElement("tr");
+  const activeSort = tableSorts[category];
+
+  sortableColumns.forEach((column) => {
+    const th = document.createElement("th");
+    const button = document.createElement("button");
+    const isActive = activeSort?.key === column.key;
+    const indicator = isActive ? (activeSort.direction === "asc" ? " ↑" : " ↓") : "";
+
+    button.className = `sortButton${isActive ? " activeSort" : ""}`;
+    button.type = "button";
+    button.textContent = `${column.label}${indicator}`;
+    button.setAttribute("aria-label", `Sort ${category} by ${column.label}`);
+    button.addEventListener("click", () => {
+      const currentSort = tableSorts[category];
+      tableSorts[category] = {
+        key: column.key,
+        direction:
+          currentSort?.key === column.key && currentSort.direction === column.firstDirection
+            ? column.firstDirection === "asc"
+              ? "desc"
+              : "asc"
+            : column.firstDirection,
+      };
+      renderPurchases();
+    });
+
+    th.append(button);
+    tr.append(th);
+  });
+
+  thead.append(tr);
+  return thead;
+}
+
 function renderPurchases() {
   if (!currentMemberPayload?.found) return;
 
@@ -135,7 +214,10 @@ function renderPurchases() {
   let visibleRows = 0;
 
   categories.forEach((category) => {
-    const rows = currentMemberPayload.categories[category].filter((row) => purchaseMatches(row, category));
+    const rows = sortedRows(
+      category,
+      currentMemberPayload.categories[category].filter((row) => purchaseMatches(row, category))
+    );
     if (!rows.length) return;
 
     const section = document.createElement("section");
@@ -146,17 +228,7 @@ function renderPurchases() {
     section.append(heading);
 
     const table = document.createElement("table");
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Paid</th>
-          <th>Total</th>
-          <th>Items</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    `;
+    table.append(renderTableHead(category), document.createElement("tbody"));
     const tbody = table.querySelector("tbody");
     rows.forEach((row) => {
       const tr = document.createElement("tr");
@@ -199,6 +271,7 @@ function renderMember(payload) {
   categoryFilter.value = "";
   dateFilter.value = "";
   paidFilter.value = "";
+  tableSorts = {};
   renderCategoryOptions(Object.keys(payload.categories));
   renderDateOptions(payload.categories);
   renderPurchases();
