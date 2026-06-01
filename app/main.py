@@ -344,7 +344,7 @@ def _hire_status_for_payment_year(matches: pd.DataFrame) -> Optional[dict[str, U
     return None
 
 
-def is_current_year_membership_paid(item: str, note: Any, paid: Any, year: int) -> bool:
+def is_current_year_membership_paid(item: str, note: Any, paid: Any) -> bool:
     if clean_scalar(paid).strip().casefold() != "yes":
         return False
     source = f"{clean_scalar(item)} {clean_scalar(note)}".casefold()
@@ -354,10 +354,13 @@ def is_current_year_membership_paid(item: str, note: Any, paid: Any, year: int) 
     stated_year = _extract_stated_year(source)
     if stated_year is None:
         return False
-    return stated_year == year
+    now = datetime.now(timezone.utc).date()
+    start = date(stated_year, 3, 1)
+    end = date(stated_year + 1, 3, 1)
+    return start <= now < end
 
 
-def is_current_year_liability_waiver_paid(item: str, note: Any, paid: Any, year: int) -> bool:
+def is_current_year_liability_waiver_paid(item: str, note: Any, paid: Any) -> bool:
     if clean_scalar(paid).strip().casefold() != "yes":
         return False
     source = f"{clean_scalar(item)} {clean_scalar(note)}".casefold()
@@ -366,7 +369,10 @@ def is_current_year_liability_waiver_paid(item: str, note: Any, paid: Any, year:
     stated_year = _extract_stated_year(source)
     if stated_year is None:
         return False
-    return stated_year == year
+    now = datetime.now(timezone.utc).date()
+    start = date(stated_year, 3, 1)
+    end = date(stated_year + 1, 3, 1)
+    return start <= now < end
 
 
 def merge_names_by_email(df: pd.DataFrame) -> pd.DataFrame:
@@ -651,18 +657,16 @@ def member_summary(name: str) -> dict[str, Any]:
             row.get("items"),
             row.get("note"),
             row.get("paid"),
-            payment_year,
         )
-        for _, row in payment_year_matches.iterrows()
+        for _, row in matches.iterrows()
     )
     liability_waiver = any(
         is_current_year_liability_waiver_paid(
             row.get("items"),
             row.get("note"),
             row.get("paid"),
-            payment_year,
         )
-        for _, row in payment_year_matches.iterrows()
+        for _, row in matches.iterrows()
     )
     hire_status = _hire_status_for_payment_year(hire_status_matches)
 
