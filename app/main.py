@@ -248,7 +248,7 @@ def _normalized_hire_duration(item: str) -> Optional[tuple[str, int, str, str]]:
         return None
 
     if "half year" in lowered or "half-year" in lowered or re.search(r"\b6\s*[-/]?(?:month|months)\b", lowered):
-        return ("Half Year", 6, _hire_segment(item), re.sub(r"\s+", " ", _strip_quantity_prefix(clean_scalar(item))).strip())
+        return ("Half Year", 6, _hire_segment(item), re.sub(r"\s+", " ", clean_scalar(item)).strip())
 
     if (
         re.search(r"\b12\s*[-/]?(?:month|months)\b", lowered)
@@ -256,7 +256,7 @@ def _normalized_hire_duration(item: str) -> Optional[tuple[str, int, str, str]]:
         or "annual" in lowered
         or "year" in lowered
     ):
-        return ("Annual", 12, _hire_segment(item), re.sub(r"\s+", " ", _strip_quantity_prefix(clean_scalar(item))).strip())
+        return ("Annual", 12, _hire_segment(item), re.sub(r"\s+", " ", clean_scalar(item)).strip())
 
     return None
 
@@ -291,7 +291,7 @@ def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, Union[str,
         if paid_date is None:
             continue
         period, months, segment, detail = duration
-        status_detail = f"{segment} - {period} {detail}".strip()
+        status_detail = f"{segment} - {detail}".strip()
         candidates.append((paid_date, status_detail, months))
 
     if not candidates:
@@ -316,6 +316,15 @@ def is_current_year_membership_paid(item: str, paid: Any, year: int) -> bool:
     if "membership" not in normalized_item:
         return False
     return re.search(rf"(?<!\d){year}(?!\d)", normalized_item) is not None
+
+
+def is_current_year_liability_waiver_paid(item: str, note: Any, paid: Any, year: int) -> bool:
+    if clean_scalar(paid).strip().casefold() != "yes":
+        return False
+    source = f"{clean_scalar(item)} {clean_scalar(note)}".casefold()
+    if "liability" not in source or "waiver" not in source:
+        return False
+    return re.search(rf"(?<!\d){year}(?!\d)", source) is not None
 
 
 def merge_names_by_email(df: pd.DataFrame) -> pd.DataFrame:
@@ -599,6 +608,15 @@ def member_summary(name: str) -> dict[str, Any]:
         is_current_year_membership_paid(clean_scalar(row.get("items")), row.get("paid"), payment_year)
         for _, row in payment_year_matches.iterrows()
     )
+    liability_waiver = any(
+        is_current_year_liability_waiver_paid(
+            row.get("items"),
+            row.get("note"),
+            row.get("paid"),
+            payment_year,
+        )
+        for _, row in payment_year_matches.iterrows()
+    )
     hire_status = _hire_status_for_payment_year(hire_status_matches)
 
     grouped: dict[str, list[dict[str, str]]] = {category: [] for category, _ in CATEGORIES}
@@ -625,6 +643,10 @@ def member_summary(name: str) -> dict[str, Any]:
         "membership_status": {
             "is_current": current_member,
             "label": "Current Member",
+        },
+        "liability_waiver_status": {
+            "is_current": liability_waiver,
+            "label": "Liability Waiver",
         },
         "hire_status": hire_status,
         "categories": grouped,

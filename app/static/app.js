@@ -10,6 +10,7 @@ const emptyState = document.querySelector("#emptyState");
 const memberPanel = document.querySelector("#memberPanel");
 const memberName = document.querySelector("#memberName");
 const membershipStatus = document.querySelector("#membershipStatus");
+const liabilityWaiverStatus = document.querySelector("#liabilityWaiverStatus");
 const hireStatus = document.querySelector("#hireStatus");
 const memberEmail = document.querySelector("#memberEmail");
 const emergencyName = document.querySelector("#emergencyName");
@@ -320,6 +321,13 @@ function renderMember(payload) {
   membershipStatus.classList.toggle("isCurrentMember", isCurrentMember);
   membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
   membershipStatus.innerHTML = statusMarkup(isCurrentMember, "Current Member");
+  const hasCurrentLiabilityWaiver = Boolean(payload.liability_waiver_status?.is_current);
+  liabilityWaiverStatus.classList.toggle("isCurrentMember", hasCurrentLiabilityWaiver);
+  liabilityWaiverStatus.classList.toggle("isNotCurrentMember", !hasCurrentLiabilityWaiver);
+  liabilityWaiverStatus.innerHTML = statusMarkup(
+    hasCurrentLiabilityWaiver,
+    payload.liability_waiver_status?.label || "Liability Waiver"
+  );
   memberEmail.textContent = text(payload.contact?.email);
   emergencyName.textContent = text(payload.emergency.emergency_contact_name);
   emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);
