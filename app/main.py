@@ -126,7 +126,8 @@ def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
         df[column] = df[column].map(clean_scalar)
 
     df["name_key"] = df["name"].str.casefold()
-    df["_dedupe_key"] = df[DEDUPLICATION_COLUMNS].astype(str).agg("||".join, axis=1)
+    dedupe_source = df[DEDUPLICATION_COLUMNS].astype(str).fillna("")
+    df["_dedupe_key"] = dedupe_source.apply(lambda row: "||".join(row.astype(str)), axis=1)
     return df
 
 
