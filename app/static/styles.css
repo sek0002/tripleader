@@ -94,6 +94,15 @@ h2 {
   margin-top: 8px;
 }
 
+#lastCheckedStatus {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 8px;
+  color: hsl(var(--freshnessHue, 120), 72%, 45%);
+  transition: color 300ms ease;
+}
+
 #dateRangeStatus {
   font-weight: 700;
 }

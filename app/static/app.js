@@ -1,4 +1,5 @@
 const syncStatus = document.querySelector("#syncStatus");
+const lastCheckedStatus = document.querySelector("#lastCheckedStatus");
 const dateRangeStatus = document.querySelector("#dateRangeStatus");
 const menuButton = document.querySelector("#menuButton");
 const pageMenu = document.querySelector("#pageMenu");
@@ -29,6 +30,23 @@ const purchaseGroups = document.querySelector("#purchaseGroups");
 let currentMemberPayload = null;
 let availableNames = [];
 let tableSorts = {};
+const FRESHNESS_WINDOW_MS = 15 * 60 * 1000;
+let lastCheckedAtMs = null;
+
+function applyFreshnessTone() {
+  if (!lastCheckedStatus) return;
+
+  if (!lastCheckedAtMs) {
+    lastCheckedStatus.style.setProperty("--freshnessHue", "120");
+    return;
+  }
+
+  const elapsed = Math.max(0, Date.now() - lastCheckedAtMs);
+  const ratio = Math.min(1, elapsed / FRESHNESS_WINDOW_MS);
+  const hue = Math.round(120 * (1 - ratio));
+  lastCheckedStatus.style.setProperty("--freshnessHue", String(hue));
+}
+
 const swRegister = () => {
   if (!("serviceWorker" in navigator)) {
     return;
@@ -71,7 +89,11 @@ function statusMarkup(isCurrent, label) {
 function setStatus(payload) {
   const when = payload.at ? new Date(payload.at).toLocaleString() : "never";
   const prefix = payload.ok === false ? "Refresh issue" : "Purchase store";
-  syncStatus.textContent = `${prefix}: ${payload.rows || 0} rows, last checked ${when}. ${payload.message || ""}`;
+  syncStatus.textContent = `${prefix}: ${payload.rows || 0} rows. ${payload.message || ""}`;
+  lastCheckedStatus.textContent = `Last checked: ${when}`;
+  const parsedLastCheckedAt = payload.at ? Date.parse(payload.at) : NaN;
+  lastCheckedAtMs = Number.isFinite(parsedLastCheckedAt) ? parsedLastCheckedAt : null;
+  applyFreshnessTone();
   dateRangeStatus.textContent = payload.date_range?.label || "Available date range: unavailable";
 }
 
@@ -418,4 +440,20 @@ nameInput.addEventListener("keydown", (event) => {
   }
 });
 
-refreshStore();
+async function loadStatus() {
+  const response = await fetch("/api/status");
+  const payload = await response.json();
+  setStatus(payload);
+}
+
+async function initApp() {
+  try {
+    await loadStatus();
+  } finally {
+    await loadNames();
+  }
+  applyFreshnessTone();
+  setInterval(applyFreshnessTone, 10000);
+}
+
+initApp();
