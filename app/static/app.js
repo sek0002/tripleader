@@ -36,6 +36,7 @@ const purchaseGroups = document.querySelector("#purchaseGroups");
 let currentMemberPayload = null;
 let availableNames = [];
 let tableSorts = {};
+let memberSearchSequence = 0;
 const FRESHNESS_WINDOW_MS = 15 * 60 * 1000;
 const initialLastCheckedAt = lastCheckedStatus?.dataset?.lastCheckedAt || "";
 const initialLastCheckedAtMs = initialLastCheckedAt ? Date.parse(initialLastCheckedAt) : NaN;
@@ -348,6 +349,12 @@ function renderPurchases() {
 
 function renderMember(payload) {
   currentMemberPayload = payload;
+  [membershipStatus, liabilityWaiverStatus, hireStatus].forEach((statusElement) => {
+    statusElement.classList.remove("isCurrentMember", "isNotCurrentMember");
+    statusElement.innerHTML = "";
+  });
+  hireStatus.classList.add("hidden");
+
   if (!payload.found) {
     memberPanel.classList.add("hidden");
     emptyState.classList.remove("hidden");
@@ -378,12 +385,9 @@ function renderMember(payload) {
 
   const isCurrentHire = Boolean(payload.hire_status?.is_current);
   if (isCurrentHire) {
-    hireStatus.classList.toggle("isCurrentMember", true);
-    hireStatus.classList.toggle("isNotCurrentMember", false);
+    hireStatus.classList.add("isCurrentMember");
     hireStatus.innerHTML = statusMarkup(true, payload.hire_status?.label || "Hire");
     hireStatus.classList.remove("hidden");
-  } else {
-    hireStatus.classList.add("hidden");
   }
 
   purchaseSearchInput.value = "";
@@ -399,8 +403,11 @@ function renderMember(payload) {
 async function searchMember() {
   const name = nameInput.value.trim();
   if (!name) return;
+  const searchSequence = (memberSearchSequence += 1);
   const response = await fetch(`/api/member/${encodeURIComponent(name)}`);
-  renderMember(await response.json());
+  const payload = await response.json();
+  if (searchSequence !== memberSearchSequence) return;
+  renderMember(payload);
 }
 
 menuButton.addEventListener("click", (event) => {
