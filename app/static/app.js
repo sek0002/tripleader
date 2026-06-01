@@ -1,4 +1,6 @@
 const syncStatus = document.querySelector("#syncStatus");
+const menuButton = document.querySelector("#menuButton");
+const pageMenu = document.querySelector("#pageMenu");
 const refreshButton = document.querySelector("#refreshButton");
 const searchButton = document.querySelector("#searchButton");
 const nameInput = document.querySelector("#nameInput");
@@ -18,6 +20,15 @@ const filterEmptyState = document.querySelector("#filterEmptyState");
 const purchaseGroups = document.querySelector("#purchaseGroups");
 
 let currentMemberPayload = null;
+
+function setMenuOpen(open) {
+  pageMenu.classList.toggle("hidden", !open);
+  menuButton.setAttribute("aria-expanded", String(open));
+}
+
+function closeMenu() {
+  setMenuOpen(false);
+}
 
 function text(value) {
   return value && String(value).trim() ? String(value).trim() : "Not supplied";
@@ -39,6 +50,7 @@ async function refreshStore() {
   } finally {
     refreshButton.disabled = false;
     refreshButton.textContent = "Refresh";
+    closeMenu();
   }
 }
 
@@ -174,6 +186,21 @@ async function searchMember() {
   renderMember(await response.json());
 }
 
+menuButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  setMenuOpen(pageMenu.classList.contains("hidden"));
+});
+pageMenu.addEventListener("click", (event) => {
+  if (event.target.matches("[data-theme-toggle]")) closeMenu();
+});
+document.addEventListener("click", (event) => {
+  if (!pageMenu.classList.contains("hidden") && !event.target.closest(".menuWrap")) {
+    closeMenu();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeMenu();
+});
 refreshButton.addEventListener("click", refreshStore);
 searchButton.addEventListener("click", searchMember);
 purchaseSearchInput.addEventListener("input", renderPurchases);

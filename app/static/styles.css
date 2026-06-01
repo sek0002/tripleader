@@ -106,11 +106,6 @@ button:disabled {
   opacity: 0.72;
 }
 
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
 .secondaryButton {
   background: var(--secondary);
   color: var(--ink);
@@ -122,6 +117,49 @@ button:disabled {
 
 .themeToggle {
   min-width: 78px;
+}
+
+.menuWrap {
+  position: relative;
+}
+
+.menuButton {
+  min-width: 96px;
+}
+
+.pageMenu {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 45px rgba(10, 20, 28, 0.16);
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+}
+
+.pageMenu.hidden {
+  display: none;
+}
+
+.menuItem {
+  background: transparent;
+  color: var(--ink);
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+}
+
+.menuItem:hover {
+  background: var(--secondary);
+}
+
+.pageMenu form {
+  margin: 0;
 }
 
 .lookup,
@@ -291,16 +329,6 @@ td:nth-child(3) {
 
   .toolbar {
     display: grid;
-  }
-
-  .actions {
-    align-items: stretch;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .actions button {
-    width: 100%;
   }
 
   .emergencyGrid {
