@@ -28,6 +28,17 @@ const purchaseGroups = document.querySelector("#purchaseGroups");
 let currentMemberPayload = null;
 let availableNames = [];
 let tableSorts = {};
+const swRegister = () => {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/static/service-worker.js").catch(() => {});
+  });
+};
+
+swRegister();
+
 const sortableColumns = [
   { key: "date", label: "Date", firstDirection: "desc" },
   { key: "paid", label: "Paid", firstDirection: "asc" },
