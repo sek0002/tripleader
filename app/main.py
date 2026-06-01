@@ -235,17 +235,20 @@ def row_year(value: Any) -> Optional[int]:
     return int(parsed.year)
 
 
-def _normalized_hire_duration(item: str) -> Optional[tuple[str, int]]:
+def _hire_segment(item: str) -> str:
+    lowered = _strip_quantity_prefix(clean_scalar(item)).casefold()
+    if "gear" in lowered or "common" in lowered or re.search(r"\bfull\b", lowered):
+        return "Common"
+    return "Other"
+
+
+def _normalized_hire_duration(item: str) -> Optional[tuple[str, int, str, str]]:
     lowered = _strip_quantity_prefix(item).casefold()
     if "hire" not in lowered:
         return None
 
-    if "half year" in lowered:
-        return ("Half year", 6)
-    if "half-year" in lowered:
-        return ("Half year", 6)
-    if re.search(r"\b6\s*[-/]?(?:month|months)\b", lowered):
-        return ("Half year", 6)
+    if "half year" in lowered or "half-year" in lowered or re.search(r"\b6\s*[-/]?(?:month|months)\b", lowered):
+        return ("Half Year", 6, _hire_segment(item), re.sub(r"\s+", " ", _strip_quantity_prefix(clean_scalar(item))).strip())
 
     if (
         re.search(r"\b12\s*[-/]?(?:month|months)\b", lowered)
@@ -253,7 +256,7 @@ def _normalized_hire_duration(item: str) -> Optional[tuple[str, int]]:
         or "annual" in lowered
         or "year" in lowered
     ):
-        return ("Year", 12)
+        return ("Annual", 12, _hire_segment(item), re.sub(r"\s+", " ", _strip_quantity_prefix(clean_scalar(item))).strip())
 
     return None
 
@@ -287,8 +290,9 @@ def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, Union[str,
         paid_date = _parse_date_or_none(row.get("date"))
         if paid_date is None:
             continue
-        label, months = duration
-        candidates.append((paid_date, label, months))
+        period, months, segment, detail = duration
+        status_detail = f"{segment} - {period} {detail}".strip()
+        candidates.append((paid_date, status_detail, months))
 
     if not candidates:
         return {
@@ -297,11 +301,11 @@ def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, Union[str,
         }
 
     candidates.sort(reverse=True, key=lambda item: item[0])
-    paid_date, label, months = candidates[0]
+    paid_date, status_label, months = candidates[0]
     valid_until = _add_months(paid_date, months)
     return {
         "is_current": paid_date <= now <= valid_until,
-        "label": f"Hire - {label}",
+        "label": f"Hire - {status_label}",
     }
 
 
@@ -602,7 +606,7 @@ def member_summary(name: str) -> dict[str, Any]:
         category = category_for_item(clean_scalar(row.get("items")))
         if category not in grouped:
             continue
-        item_text = _strip_quantity_prefix(clean_scalar(row.get("items")))
+        item_text = clean_scalar(row.get("items"))
         grouped.setdefault(category, []).append(
             {
                 "date": clean_scalar(row.get("date")),
