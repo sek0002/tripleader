@@ -31,8 +31,8 @@ CATEGORIES = [
     ("Merch", ["merch"]),
     ("Hire", ["hire"]),
     ("Car Fee", ["car fee"]),
-    ("Air Fills/Tank Fills", ["air fill", "air fills", "tank fill", "tank fills", "nitrox"]),
     ("Boat Dive/Exclusive", ["boat dive", "exclusive"]),
+    ("Air Fills/Tank Fills", ["air fill", "air fills", "tank fill", "tank fills", "nitrox"]),
     ("Course", ["course"]),
     ("Misc", ["misc"]),
 ]
