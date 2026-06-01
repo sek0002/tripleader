@@ -23,7 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 STORE_PATH = BASE_DIR / "purchases.csv"
 LEGACY_PURCHASES_PATH = DATA_DIR / "purchases.csv"
-TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json?_csv_data=v1"
+TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json"
+TEAMAPP_PAGE_PARAM = "page"
+TEAMAPP_PAGE_RANGE = range(1, 7)
 SYNC_INTERVAL_SECONDS = 60 * 60
 
 CATEGORIES = [
@@ -183,10 +185,25 @@ def build_headers() -> dict[str, str]:
 
 
 def fetch_remote_purchases() -> pd.DataFrame:
-    response = requests.get(TEAMAPP_URL, headers=build_headers(), timeout=30)
-    response.raise_for_status()
-    payload = response.json()
-    return normalize_frame(pd.json_normalize(payload.get("data", [])))
+    frames: list[pd.DataFrame] = []
+    for page in TEAMAPP_PAGE_RANGE:
+        response = requests.get(
+            TEAMAPP_URL,
+            headers=build_headers(),
+            params={"_csv_data": "v1", TEAMAPP_PAGE_PARAM: page},
+            timeout=30,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        rows = payload.get("data", [])
+        if not isinstance(rows, list) or not rows:
+            continue
+        frames.append(pd.json_normalize(rows))
+
+    if not frames:
+        return normalize_frame(pd.DataFrame())
+
+    return normalize_frame(pd.concat(frames, ignore_index=True))
 
 
 def sync_purchases(force: bool = False) -> dict[str, Any]:
