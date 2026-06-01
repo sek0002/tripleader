@@ -242,13 +242,35 @@ def _hire_segment(item: str) -> str:
     return "Other"
 
 
+def _hire_status_detail(item: str, period: str) -> str:
+    detail = _strip_quantity_prefix(clean_scalar(item))
+    detail = re.sub(r"\s+", " ", detail).strip()
+    detail = re.sub(r"^\s*\d+\s*x\s*\d*\s*[-.:]?\s*", "", detail, flags=re.I)
+    detail = re.sub(r"^\s*(?:hire|rental)\b[\s:.-]*", "", detail, flags=re.I)
+    detail = re.sub(r"^[\s\-.:]+", "", detail).strip()
+
+    normalized_detail = re.sub(r"-", " ", detail.casefold())
+    period_normalized = period.lower().replace("-", " ")
+    if period_normalized not in normalized_detail:
+        detail = f"{period} {detail}".strip() if detail else period
+
+    detail = re.sub(r"\s+", " ", detail).strip()
+    return detail.title() if detail else ""
+
+
 def _normalized_hire_duration(item: str) -> Optional[tuple[str, int, str, str]]:
     lowered = _strip_quantity_prefix(item).casefold()
     if "hire" not in lowered:
         return None
 
     if "half year" in lowered or "half-year" in lowered or re.search(r"\b6\s*[-/]?(?:month|months)\b", lowered):
-        return ("Half Year", 6, _hire_segment(item), re.sub(r"\s+", " ", clean_scalar(item)).strip())
+        period = "Half Year"
+        return (
+            period,
+            6,
+            _hire_segment(item),
+            _hire_status_detail(item, period),
+        )
 
     if (
         re.search(r"\b12\s*[-/]?(?:month|months)\b", lowered)
@@ -256,7 +278,13 @@ def _normalized_hire_duration(item: str) -> Optional[tuple[str, int, str, str]]:
         or "annual" in lowered
         or "year" in lowered
     ):
-        return ("Annual", 12, _hire_segment(item), re.sub(r"\s+", " ", clean_scalar(item)).strip())
+        period = "Annual"
+        return (
+            period,
+            12,
+            _hire_segment(item),
+            _hire_status_detail(item, period),
+        )
 
     return None
 
