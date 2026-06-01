@@ -251,6 +251,9 @@ def member_summary(name: str) -> dict[str, Any]:
         return {"found": False, "name": name, "emergency": {}, "categories": {}}
 
     latest = matches.iloc[0]
+    contact = {
+        "email": clean_scalar(latest.get("email")),
+    }
     emergency = {
         "emergency_contact_name": clean_scalar(latest.get("emergency_contact_name")),
         "emergency_contact_relationship": clean_scalar(latest.get("emergency_contact_relationship")),
@@ -274,6 +277,7 @@ def member_summary(name: str) -> dict[str, Any]:
     return {
         "found": True,
         "name": clean_scalar(matches.iloc[0].get("name")) or name,
+        "contact": contact,
         "emergency": emergency,
         "categories": grouped,
     }

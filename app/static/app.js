@@ -9,12 +9,14 @@ const nameSuggestions = document.querySelector("#nameSuggestions");
 const emptyState = document.querySelector("#emptyState");
 const memberPanel = document.querySelector("#memberPanel");
 const memberName = document.querySelector("#memberName");
+const memberEmail = document.querySelector("#memberEmail");
 const emergencyName = document.querySelector("#emergencyName");
 const emergencyRelationship = document.querySelector("#emergencyRelationship");
 const emergencyPhone = document.querySelector("#emergencyPhone");
 const emergencyPhone2 = document.querySelector("#emergencyPhone2");
 const purchaseSearchInput = document.querySelector("#purchaseSearchInput");
 const categoryFilter = document.querySelector("#categoryFilter");
+const dateFilter = document.querySelector("#dateFilter");
 const paidFilter = document.querySelector("#paidFilter");
 const clearFiltersButton = document.querySelector("#clearFiltersButton");
 const filterEmptyState = document.querySelector("#filterEmptyState");
@@ -75,6 +77,7 @@ function paidClass(value) {
 function purchaseMatches(row, category) {
   const query = purchaseSearchInput.value.trim().toLowerCase();
   const selectedCategory = categoryFilter.value;
+  const selectedDate = dateFilter.value;
   const selectedPaid = paidFilter.value;
   const rowText = [row.date, row.paid, row.total, row.items].map(text).join(" ").toLowerCase();
   const paidValue = String(row.paid || "").trim().toUpperCase();
@@ -82,6 +85,7 @@ function purchaseMatches(row, category) {
   return (
     (!query || rowText.includes(query)) &&
     (!selectedCategory || category === selectedCategory) &&
+    (!selectedDate || row.date === selectedDate) &&
     (!selectedPaid || paidValue === selectedPaid)
   );
 }
@@ -96,6 +100,22 @@ function renderCategoryOptions(categories) {
       Object.assign(document.createElement("option"), {
         textContent: category,
         value: category,
+      })
+    )
+  );
+}
+
+function renderDateOptions(categories) {
+  const dates = [...new Set(Object.values(categories).flat().map((row) => row.date).filter(Boolean))].sort().reverse();
+  dateFilter.replaceChildren(
+    Object.assign(document.createElement("option"), {
+      textContent: "All dates",
+      value: "",
+    }),
+    ...dates.map((date) =>
+      Object.assign(document.createElement("option"), {
+        textContent: date,
+        value: date,
       })
     )
   );
@@ -169,6 +189,7 @@ function renderMember(payload) {
   emptyState.classList.add("hidden");
   memberPanel.classList.remove("hidden");
   memberName.textContent = payload.name;
+  memberEmail.textContent = text(payload.contact?.email);
   emergencyName.textContent = text(payload.emergency.emergency_contact_name);
   emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);
   emergencyPhone.textContent = text(payload.emergency.emergency_contact_phone);
@@ -176,8 +197,10 @@ function renderMember(payload) {
 
   purchaseSearchInput.value = "";
   categoryFilter.value = "";
+  dateFilter.value = "";
   paidFilter.value = "";
   renderCategoryOptions(Object.keys(payload.categories));
+  renderDateOptions(payload.categories);
   renderPurchases();
 }
 
@@ -207,10 +230,12 @@ refreshButton.addEventListener("click", refreshStore);
 searchButton.addEventListener("click", searchMember);
 purchaseSearchInput.addEventListener("input", renderPurchases);
 categoryFilter.addEventListener("change", renderPurchases);
+dateFilter.addEventListener("change", renderPurchases);
 paidFilter.addEventListener("change", renderPurchases);
 clearFiltersButton.addEventListener("click", () => {
   purchaseSearchInput.value = "";
   categoryFilter.value = "";
+  dateFilter.value = "";
   paidFilter.value = "";
   renderPurchases();
 });
