@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MUUC Purchase Lookup</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="toolbar">
+        <div>
+          <h1>MUUC Purchase Lookup</h1>
+          <p id="syncStatus">Preparing purchase store...</p>
+        </div>
+        <div class="actions">
+          <button id="refreshButton" type="button">Refresh</button>
+          <form method="post" action="/logout">
+            <button class="secondaryButton" type="submit">Logout</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="lookup">
+        <label for="nameInput">Name</label>
+        <div class="searchRow">
+          <input id="nameInput" list="nameSuggestions" type="text" autocomplete="off" placeholder="Start typing a member name">
+          <datalist id="nameSuggestions"></datalist>
+          <button id="searchButton" type="button">Search</button>
+        </div>
+      </section>
+
+      <section id="emptyState" class="empty">Select a name to view emergency contact and purchase details.</section>
+
+      <section id="memberPanel" class="hidden">
+        <div class="panel">
+          <h2 id="memberName"></h2>
+          <div class="grid emergencyGrid">
+            <div>
+              <span>Emergency contact</span>
+              <strong id="emergencyName"></strong>
+            </div>
+            <div>
+              <span>Relationship</span>
+              <strong id="emergencyRelationship"></strong>
+            </div>
+            <div>
+              <span>Phone</span>
+              <strong id="emergencyPhone"></strong>
+            </div>
+            <div>
+              <span>Alternate phone</span>
+              <strong id="emergencyPhone2"></strong>
+            </div>
+          </div>
+        </div>
+
+        <div id="purchaseGroups" class="purchaseGroups"></div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
