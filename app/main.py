@@ -62,7 +62,7 @@ DISPLAY_COLUMNS = [
     "contact_address",
 ]
 
-KEY_COLUMNS = ["date", "purchase_id", "name", "total", "items", "paid"]
+DEDUPLICATION_COLUMNS = ["purchase_id", "items"]
 
 load_dotenv(BASE_DIR / ".env")
 sync_lock = threading.Lock()
@@ -124,9 +124,7 @@ def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
         df[column] = df[column].map(clean_scalar)
 
     df["name_key"] = df["name"].str.casefold()
-    base_key = df[KEY_COLUMNS].astype(str).agg("||".join, axis=1)
-    df["_line_occurrence"] = df.groupby(base_key, sort=False).cumcount()
-    df["_row_key"] = base_key + "||" + df["_line_occurrence"].astype(str)
+    df["_dedupe_key"] = df[DEDUPLICATION_COLUMNS].astype(str).agg("||".join, axis=1)
     return df
 
 
@@ -139,8 +137,14 @@ def load_store() -> pd.DataFrame:
 
 def save_store(df: pd.DataFrame) -> None:
     DATA_DIR.mkdir(exist_ok=True)
-    output = df.drop(columns=["name_key", "_line_occurrence", "_row_key"], errors="ignore")
+    output = df.drop(columns=["name_key", "_dedupe_key"], errors="ignore")
     output.to_csv(STORE_PATH, index=False)
+
+
+def deduplicate_purchases(df: pd.DataFrame, keep: str = "first") -> pd.DataFrame:
+    if df.empty:
+        return df
+    return df.drop_duplicates(subset=["_dedupe_key"], keep=keep).reset_index(drop=True)
 
 
 def purchase_date_range(df: pd.DataFrame | None = None) -> dict[str, str]:
@@ -187,15 +191,20 @@ def fetch_remote_purchases() -> pd.DataFrame:
 def sync_purchases(force: bool = False) -> dict[str, Any]:
     del force
     with sync_lock:
-        existing = load_store()
+        existing = deduplicate_purchases(load_store(), keep="first")
         try:
             fresh = fetch_remote_purchases()
+            existing_count = len(existing)
             merged = pd.concat([existing, fresh], ignore_index=True)
-            merged = merged.drop_duplicates(subset=["_row_key"], keep="last")
+            merged = deduplicate_purchases(merged, keep="first")
+            added_count = len(merged) - existing_count
             save_store(merged)
             status = {
                 "ok": True,
-                "message": f"Synced {len(fresh)} fetched rows into {len(merged)} stored rows",
+                "message": (
+                    f"Fetched {len(fresh)} rows, appended {added_count} new rows, "
+                    f"stored {len(merged)} unique purchase/item rows"
+                ),
                 "rows": int(len(merged)),
                 "at": datetime.now(timezone.utc).isoformat(),
             }
