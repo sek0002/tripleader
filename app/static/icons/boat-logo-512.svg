@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>MUUC Trip Leader</title>
+  <defs>
+    <linearGradient id="overlay" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#ffffff"/>
+  <clipPath id="clip">
+    <rect width="512" height="512" rx="128"/>
+  </clipPath>
+  <g clip-path="url(#clip)">
+    <image href="/static/icons/muuc-logo-backdrop.png" x="0" y="0" width="512" height="512" preserveAspectRatio="xMidYMid slice"/>
+    <rect width="512" height="512" fill="url(#overlay)"/>
+  </g>
+  <g transform="translate(61 82)">
+    <ellipse cx="195" cy="318" rx="246" ry="72" fill="#0a4d56" opacity="0.72"/>
+    <path d="M34 312 H356 L304 108 A76 76 0 0 0 132 108 Z" fill="#f7fbff"/>
+    <path d="M136 314 H278" stroke="#0f6d7a" stroke-width="14" stroke-linecap="round"/>
+    <path d="M195 316 V198" stroke="#0f6d7a" stroke-width="14" stroke-linecap="round"/>
+    <path d="M195 214 L138 262 H252" stroke="#0f6d7a" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="195" cy="171" r="16" fill="#0a4d56"/>
+    <path d="M34 312 C58 276 140 250 195 250 C250 250 332 276 356 312" fill="none" stroke="#ffffff" stroke-width="18" opacity="0.45"/>
+    <path d="M356 312 C332 288 272 272 195 272 C118 272 58 288 34 312" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.4"/>
+  </g>
+  <circle cx="440" cy="56" r="28" fill="#ffffff" opacity="0.85"/>
+</svg>

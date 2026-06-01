@@ -5,8 +5,7 @@ const APP_SHELL = [
   "/static/app.js",
   "/static/theme.js",
   "/static/manifest.webmanifest",
-  "/static/icons/muuc-icon-192.svg",
-  "/static/icons/muuc-icon-512.svg",
+  "/static/icons/muuc-logo-backdrop.png",
 ];
 
 self.addEventListener("install", (event) => {
