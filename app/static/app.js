@@ -45,14 +45,14 @@ function applyFreshnessTone() {
   if (!lastCheckedStatus) return;
 
   if (!lastCheckedAtMs) {
-    lastCheckedStatus.style.setProperty("--freshnessHue", "120");
+    lastCheckedStatus.style.color = "hsl(120, 72%, 45%)";
     return;
   }
 
   const elapsed = Math.max(0, Date.now() - lastCheckedAtMs);
   const ratio = Math.min(1, elapsed / FRESHNESS_WINDOW_MS);
   const hue = Math.round(120 * (1 - ratio));
-  lastCheckedStatus.style.setProperty("--freshnessHue", String(hue));
+  lastCheckedStatus.style.color = `hsl(${hue}, 72%, 45%)`;
 }
 
 const swRegister = () => {

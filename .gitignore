@@ -1,5 +1,6 @@
 .env
 purchases.csv
+purchases.sync.json
 data/*.csv
 __pycache__/
 *.py[cod]

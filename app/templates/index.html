@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css?v=8">
   </head>
   <body>
     <main class="shell">
@@ -23,7 +23,7 @@
           <h1>MUUC Trip Leader App</h1>
           <div class="syncStatusPanel">
             <p id="syncStatus">{{ sync_status_text | default("Preparing purchase store...") }}</p>
-            <p id="lastCheckedStatus" class="lastCheckedStatus" data-last-checked-at="{{ last_checked_at | default("") }}">{{ last_checked_text | default("Last checked: loading...") }}</p>
+            <p id="lastCheckedStatus" class="lastCheckedStatus" data-last-checked-at="{{ last_checked_at | default("") }}" style="color: {{ last_checked_color | default("hsl(120, 72%, 45%)") }}">{{ last_checked_text | default("Last checked: loading...") }}</p>
           </div>
         </div>
         <div class="topActions">
@@ -138,7 +138,7 @@
       </section>
     </main>
 
-    <script src="/static/theme.js"></script>
-    <script src="/static/app.js"></script>
+    <script src="/static/theme.js?v=8"></script>
+    <script src="/static/app.js?v=8"></script>
   </body>
 </html>

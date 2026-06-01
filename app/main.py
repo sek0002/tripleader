@@ -568,6 +568,17 @@ def display_sync_time(value: Any) -> str:
     return parsed.astimezone().strftime("%d/%m/%Y, %I:%M:%S %p")
 
 
+def freshness_color(value: Any) -> str:
+    parsed = _parse_stored_sync_time(value)
+    if parsed is None:
+        return "hsl(120, 72%, 45%)"
+    now = datetime.now(timezone.utc)
+    elapsed = max(0.0, (now - parsed.astimezone(timezone.utc)).total_seconds())
+    ratio = min(1.0, elapsed / SYNC_STALE_SECONDS)
+    hue = round(120 * (1 - ratio))
+    return f"hsl({hue}, 72%, 45%)"
+
+
 def build_headers() -> dict[str, str]:
     load_dotenv(BASE_DIR / ".env", override=True)
     cookie = os.getenv("TEAMAPP_COOKIE", "").strip()
@@ -823,6 +834,7 @@ def index(request: Request):
             "sync_status_text": f"{prefix}: {current.get('rows') or 0} rows. {current.get('message') or ''}",
             "last_checked_text": f"Last checked: {display_sync_time(current.get('at'))}",
             "last_checked_at": current.get("at") or "",
+            "last_checked_color": freshness_color(current.get("at")),
         },
     )
 

@@ -110,7 +110,7 @@ h2 {
   font-size: 14px;
   font-weight: 800;
   margin-top: 0;
-  color: hsl(var(--freshnessHue, 120), 72%, 45%);
+  color: #20b82f;
   overflow-wrap: anywhere;
   transition: color 300ms ease;
 }

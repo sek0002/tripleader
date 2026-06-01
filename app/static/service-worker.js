@@ -1,9 +1,8 @@
-const CACHE_NAME = "muuc-tripleader-cache-v6";
+const CACHE_NAME = "muuc-tripleader-cache-v8";
 const APP_SHELL = [
-  "/",
-  "/static/styles.css",
-  "/static/app.js",
-  "/static/theme.js",
+  "/static/styles.css?v=8",
+  "/static/app.js?v=8",
+  "/static/theme.js?v=8",
   "/static/manifest.webmanifest",
   "/static/icons/muuc-logo-backdrop.png",
 ];
@@ -34,6 +33,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   const url = new URL(request.url);
+  if (request.mode === "navigate") {
+    event.respondWith(fetch(request));
+    return;
+  }
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(fetch(request));
     return;
