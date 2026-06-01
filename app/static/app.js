@@ -24,6 +24,7 @@ const filterEmptyState = document.querySelector("#filterEmptyState");
 const purchaseGroups = document.querySelector("#purchaseGroups");
 
 let currentMemberPayload = null;
+let availableNames = [];
 let tableSorts = {};
 const sortableColumns = [
   { key: "date", label: "Date", firstDirection: "desc" },
@@ -69,13 +70,8 @@ async function refreshStore() {
 async function loadNames() {
   const response = await fetch("/api/names");
   const payload = await response.json();
-  nameSuggestions.replaceChildren(
-    ...payload.names.map((name) => {
-      const option = document.createElement("option");
-      option.value = name;
-      return option;
-    })
-  );
+  availableNames = payload.names;
+  renderNameSuggestions();
 }
 
 function paidClass(value) {
@@ -140,6 +136,44 @@ function sortedRows(category, rows) {
 
     return sort.direction === "asc" ? comparison : -comparison;
   });
+}
+
+function closeNameSuggestions() {
+  nameSuggestions.classList.add("hidden");
+}
+
+function renderNameSuggestions() {
+  const query = nameInput.value.trim().toLowerCase();
+  if (!query) {
+    closeNameSuggestions();
+    return;
+  }
+
+  const matches = availableNames
+    .filter((name) => name.toLowerCase().includes(query))
+    .slice(0, 80);
+
+  if (!matches.length) {
+    closeNameSuggestions();
+    return;
+  }
+
+  nameSuggestions.replaceChildren(
+    ...matches.map((name) => {
+      const button = document.createElement("button");
+      button.className = "nameSuggestion";
+      button.type = "button";
+      button.setAttribute("role", "option");
+      button.textContent = name;
+      button.addEventListener("click", () => {
+        nameInput.value = name;
+        closeNameSuggestions();
+        searchMember();
+      });
+      return button;
+    })
+  );
+  nameSuggestions.classList.remove("hidden");
 }
 
 function renderCategoryOptions(categories) {
@@ -301,9 +335,15 @@ document.addEventListener("click", (event) => {
   if (!pageMenu.classList.contains("hidden") && !event.target.closest(".menuWrap")) {
     closeMenu();
   }
+  if (!event.target.closest(".autocompleteWrap")) {
+    closeNameSuggestions();
+  }
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeMenu();
+  if (event.key === "Escape") {
+    closeMenu();
+    closeNameSuggestions();
+  }
 });
 refreshButton.addEventListener("click", refreshStore);
 searchButton.addEventListener("click", searchMember);
@@ -320,9 +360,14 @@ clearFiltersButton.addEventListener("click", () => {
   paidFilter.value = "";
   renderPurchases();
 });
+nameInput.addEventListener("input", renderNameSuggestions);
+nameInput.addEventListener("focus", renderNameSuggestions);
 nameInput.addEventListener("change", searchMember);
 nameInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") searchMember();
+  if (event.key === "Enter") {
+    closeNameSuggestions();
+    searchMember();
+  }
 });
 
 refreshStore();
