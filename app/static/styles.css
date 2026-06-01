@@ -417,6 +417,17 @@ select:focus {
   padding-top: 10px;
 }
 
+.memberInfoCard.memberInfoCard--stacked {
+  display: grid;
+  gap: 12px;
+}
+
+.memberInfoCard.memberInfoCard--stacked > div + div {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
 .purchaseGroups {
   display: grid;
   gap: 16px;
