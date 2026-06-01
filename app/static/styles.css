@@ -59,6 +59,10 @@ body {
   margin-bottom: 24px;
 }
 
+.toolbarStatus {
+  min-width: 0;
+}
+
 h1,
 h2,
 h3,
@@ -91,15 +95,18 @@ h2 {
 #syncStatus,
 #dateRangeStatus {
   color: var(--muted);
+  display: block;
   margin-top: 8px;
+  overflow-wrap: anywhere;
 }
 
 #lastCheckedStatus {
-  color: var(--ink);
+  display: block;
   font-size: 14px;
   font-weight: 800;
   margin-top: 8px;
   color: hsl(var(--freshnessHue, 120), 72%, 45%);
+  overflow-wrap: anywhere;
   transition: color 300ms ease;
 }
 
@@ -563,6 +570,17 @@ td:nth-child(3) {
 
   .toolbar {
     display: grid;
+  }
+
+  .toolbarStatus {
+    display: block;
+    width: 100%;
+  }
+
+  #syncStatus,
+  #lastCheckedStatus {
+    font-size: 14px;
+    line-height: 1.35;
   }
 
   .topActions {
