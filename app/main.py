@@ -27,14 +27,12 @@ TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json?_csv_d
 SYNC_INTERVAL_SECONDS = 60 * 60
 
 CATEGORIES = [
-    ("Membership", ["membership"]),
-    ("Merch", ["merch"]),
     ("Hire", ["hire"]),
     ("Car Fee", ["car fee"]),
     ("Boat Dive/Exclusive", ["boat dive", "exclusive"]),
     ("Air Fills/Tank Fills", ["air fill", "air fills", "tank fill", "tank fills", "nitrox"]),
     ("Course", ["course"]),
-    ("Misc", ["misc"]),
+    ("Membership", ["membership"]),
 ]
 
 DISPLAY_COLUMNS = [
@@ -242,7 +240,17 @@ def category_for_item(item: str) -> str:
 
 def names_from_store() -> list[str]:
     df = load_store()
-    names = sorted({name for name in df["name"].dropna().map(clean_scalar) if name}, key=str.casefold)
+    grouped_names: dict[str, str] = {}
+    for _, row in df.iterrows():
+        name = clean_scalar(row.get("name"))
+        if not name:
+            continue
+        email = clean_scalar(row.get("email")).casefold()
+        key = f"email:{email}" if email else f"name:{name.casefold()}"
+        if len(name) > len(grouped_names.get(key, "")):
+            grouped_names[key] = name
+
+    names = sorted(grouped_names.values(), key=str.casefold)
     return names
 
 
@@ -253,9 +261,18 @@ def member_summary(name: str) -> dict[str, Any]:
     if matches.empty:
         return {"found": False, "name": name, "emergency": {}, "categories": {}}
 
+    base_email = clean_scalar(matches.iloc[0].get("email"))
+    if base_email:
+        email_key = base_email.casefold()
+        matched_by_email = df[df["email"].str.casefold() == email_key].copy()
+        if not matched_by_email.empty:
+            matches = matched_by_email
+
+    merged_names = [clean_scalar(value) for value in matches["name"]]
+    merged_name = max((value for value in merged_names if value), key=len, default=name)
     latest = matches.iloc[0]
     contact = {
-        "email": clean_scalar(latest.get("email")),
+        "email": base_email or clean_scalar(latest.get("email")),
     }
     emergency = {
         "emergency_contact_name": clean_scalar(latest.get("emergency_contact_name")),
@@ -267,6 +284,8 @@ def member_summary(name: str) -> dict[str, Any]:
     grouped: dict[str, list[dict[str, str]]] = {category: [] for category, _ in CATEGORIES}
     for _, row in matches.iterrows():
         category = category_for_item(clean_scalar(row.get("items")))
+        if category not in grouped:
+            continue
         grouped.setdefault(category, []).append(
             {
                 "date": clean_scalar(row.get("date")),
@@ -279,7 +298,7 @@ def member_summary(name: str) -> dict[str, Any]:
     grouped = {category: rows for category, rows in grouped.items() if rows}
     return {
         "found": True,
-        "name": clean_scalar(matches.iloc[0].get("name")) or name,
+        "name": merged_name,
         "contact": contact,
         "emergency": emergency,
         "categories": grouped,

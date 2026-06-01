@@ -47,28 +47,33 @@
       <section id="memberPanel" class="hidden">
         <div class="panel">
           <h2 id="memberName"></h2>
-          <div class="grid emergencyGrid">
-            <div>
-              <span>Email</span>
-              <strong id="memberEmail"></strong>
+          <details id="memberInfo" class="memberInfo">
+            <summary class="memberInfoSummary">Member information</summary>
+            <div class="panel">
+              <div class="grid emergencyGrid">
+                <div>
+                  <span>Email</span>
+                  <strong id="memberEmail"></strong>
+                </div>
+                <div>
+                  <span>Emergency contact</span>
+                  <strong id="emergencyName"></strong>
+                </div>
+                <div>
+                  <span>Relationship</span>
+                  <strong id="emergencyRelationship"></strong>
+                </div>
+                <div>
+                  <span>Phone</span>
+                  <strong id="emergencyPhone"></strong>
+                </div>
+                <div>
+                  <span>Alternate phone</span>
+                  <strong id="emergencyPhone2"></strong>
+                </div>
+              </div>
             </div>
-            <div>
-              <span>Emergency contact</span>
-              <strong id="emergencyName"></strong>
-            </div>
-            <div>
-              <span>Relationship</span>
-              <strong id="emergencyRelationship"></strong>
-            </div>
-            <div>
-              <span>Phone</span>
-              <strong id="emergencyPhone"></strong>
-            </div>
-            <div>
-              <span>Alternate phone</span>
-              <strong id="emergencyPhone2"></strong>
-            </div>
-          </div>
+          </details>
         </div>
 
         <div class="panel filterPanel">
