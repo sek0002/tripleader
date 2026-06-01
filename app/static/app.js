@@ -16,6 +16,7 @@ const emergencyPhone = document.querySelector("#emergencyPhone");
 const emergencyPhone2 = document.querySelector("#emergencyPhone2");
 const purchaseSearchInput = document.querySelector("#purchaseSearchInput");
 const categoryFilter = document.querySelector("#categoryFilter");
+const monthYearFilter = document.querySelector("#monthYearFilter");
 const paidFilter = document.querySelector("#paidFilter");
 const clearFiltersButton = document.querySelector("#clearFiltersButton");
 const filterEmptyState = document.querySelector("#filterEmptyState");
@@ -79,6 +80,7 @@ function paidClass(value) {
 function purchaseMatches(row, category) {
   const query = purchaseSearchInput.value.trim().toLowerCase();
   const selectedCategory = categoryFilter.value;
+  const selectedMonthYear = monthYearFilter.value;
   const selectedPaid = paidFilter.value;
   const rowText = [row.date, row.paid, row.total, row.items].map(text).join(" ").toLowerCase();
   const paidValue = String(row.paid || "").trim().toUpperCase();
@@ -86,8 +88,22 @@ function purchaseMatches(row, category) {
   return (
     (!query || rowText.includes(query)) &&
     (!selectedCategory || category === selectedCategory) &&
+    (!selectedMonthYear || monthYearKey(row.date) === selectedMonthYear) &&
     (!selectedPaid || paidValue === selectedPaid)
   );
+}
+
+function monthYearKey(value) {
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) return "";
+  return new Date(timestamp).toISOString().slice(0, 7);
+}
+
+function monthYearLabel(key) {
+  if (!key) return "";
+  const [year, month] = key.split("-");
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, 1));
+  return date.toLocaleString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
 }
 
 function parseDate(value) {
@@ -168,6 +184,25 @@ function renderCategoryOptions(categories) {
       Object.assign(document.createElement("option"), {
         textContent: category,
         value: category,
+      })
+    )
+  );
+}
+
+function renderMonthYearOptions(categories) {
+  const monthKeys = [
+    ...new Set(Object.values(categories).flat().map((row) => monthYearKey(row.date)).filter(Boolean)),
+  ].sort().reverse();
+
+  monthYearFilter.replaceChildren(
+    Object.assign(document.createElement("option"), {
+      textContent: "All months",
+      value: "",
+    }),
+    ...monthKeys.map((key) =>
+      Object.assign(document.createElement("option"), {
+        textContent: monthYearLabel(key),
+        value: key,
       })
     )
   );
@@ -279,9 +314,11 @@ function renderMember(payload) {
 
   purchaseSearchInput.value = "";
   categoryFilter.value = "";
+  monthYearFilter.value = "";
   paidFilter.value = "";
   tableSorts = {};
   renderCategoryOptions(Object.keys(payload.categories));
+  renderMonthYearOptions(payload.categories);
   renderPurchases();
 }
 
@@ -317,10 +354,12 @@ refreshButton.addEventListener("click", refreshStore);
 searchButton.addEventListener("click", searchMember);
 purchaseSearchInput.addEventListener("input", renderPurchases);
 categoryFilter.addEventListener("change", renderPurchases);
+monthYearFilter.addEventListener("change", renderPurchases);
 paidFilter.addEventListener("change", renderPurchases);
 clearFiltersButton.addEventListener("click", () => {
   purchaseSearchInput.value = "";
   categoryFilter.value = "";
+  monthYearFilter.value = "";
   paidFilter.value = "";
   renderPurchases();
 });

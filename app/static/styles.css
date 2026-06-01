@@ -317,7 +317,7 @@ select:focus {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) minmax(150px, 190px) auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) minmax(150px, 190px) minmax(150px, 190px) auto;
   margin-top: 16px;
 }
 
