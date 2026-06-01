@@ -390,6 +390,7 @@ def _invalidate_store_cache() -> None:
 
 
 def load_store() -> pd.DataFrame:
+    global _store_cache, _store_cache_source, _store_cache_mtime
     source = _store_source()
     if source is None or not source.exists():
         return normalize_frame(pd.DataFrame())
