@@ -386,7 +386,7 @@ select:focus {
 }
 
 .filterPanel {
-  align-items: end;
+  align-items: start;
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) minmax(150px, 190px) minmax(150px, 190px) auto;
@@ -394,6 +394,7 @@ select:focus {
 }
 
 .filterPanel button {
+  align-self: start;
   min-width: 90px;
 }
 
