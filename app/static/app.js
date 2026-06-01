@@ -13,6 +13,7 @@ const membershipStatus = document.querySelector("#membershipStatus");
 const liabilityWaiverStatus = document.querySelector("#liabilityWaiverStatus");
 const hireStatus = document.querySelector("#hireStatus");
 const memberEmail = document.querySelector("#memberEmail");
+const memberPhone = document.querySelector("#memberPhone");
 const emergencyName = document.querySelector("#emergencyName");
 const emergencyRelationship = document.querySelector("#emergencyRelationship");
 const emergencyPhone = document.querySelector("#emergencyPhone");
@@ -288,7 +289,7 @@ function renderPurchases() {
     if (!rows.length) return;
 
     const section = document.createElement("section");
-    section.className = "panel purchasePanel";
+    section.className = "panel categorySection";
 
     const heading = document.createElement("h3");
     heading.textContent = category;
@@ -340,6 +341,7 @@ function renderMember(payload) {
     payload.liability_waiver_status?.label || "Liability Waiver"
   );
   memberEmail.textContent = text(payload.contact?.email);
+  memberPhone.textContent = text(payload.contact?.phone);
   emergencyName.textContent = text(payload.emergency.emergency_contact_name);
   emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);
   emergencyPhone.textContent = text(payload.emergency.emergency_contact_phone);

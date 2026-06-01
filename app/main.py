@@ -642,8 +642,13 @@ def member_summary(name: str) -> dict[str, Any]:
     merged_names = [normalize_member_name(value) for value in matches["name"]]
     merged_name = max((value for value in merged_names if value), key=len, default=name)
     latest = matches.iloc[0]
+    contact_phone = next(
+        (clean_scalar(value) for value in matches["phone"] if clean_scalar(value)),
+        "",
+    )
     contact = {
         "email": base_email or clean_scalar(latest.get("email")),
+        "phone": contact_phone,
     }
     emergency = {
         "emergency_contact_name": clean_scalar(latest.get("emergency_contact_name")),
