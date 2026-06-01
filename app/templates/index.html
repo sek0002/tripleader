@@ -15,7 +15,7 @@
         <div>
           <h1>MUUC Trip Leader App</h1>
           <p id="syncStatus">Preparing purchase store...</p>
-          <p id="dateRangeStatus">Available date range: checking data...</p>
+          <p id="dateRangeStatus" class="hidden">Available date range: checking data...</p>
         </div>
         <div class="topActions">
           <button id="refreshButton" type="button">Refresh</button>
@@ -32,19 +32,14 @@
       </section>
 
       <section class="lookup">
-        <details id="nameSearchSection" class="searchDropdown">
-          <summary class="searchDropdownSummary">Name search</summary>
-          <div class="searchDropdownContent">
-            <label for="nameInput">Name</label>
-            <div class="searchRow">
-              <div class="autocompleteWrap">
-                <input id="nameInput" type="text" autocomplete="off" placeholder="Start typing a member name" aria-autocomplete="list" aria-controls="nameSuggestions">
-                <div id="nameSuggestions" class="nameSuggestions hidden" role="listbox"></div>
-              </div>
-              <button id="searchButton" type="button">Search</button>
-            </div>
+        <label for="nameInput">Name</label>
+        <div class="searchRow">
+          <div class="autocompleteWrap">
+            <input id="nameInput" type="text" autocomplete="off" placeholder="Start typing a member name" aria-autocomplete="list" aria-controls="nameSuggestions">
+            <div id="nameSuggestions" class="nameSuggestions hidden" role="listbox"></div>
           </div>
-        </details>
+          <button id="searchButton" type="button">Search</button>
+        </div>
       </section>
 
       <section id="emptyState" class="empty">Select a name to view emergency contact and purchase details.</section>
