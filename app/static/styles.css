@@ -278,8 +278,14 @@ select:focus {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) minmax(150px, 190px) minmax(150px, 190px) auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) minmax(260px, 340px) minmax(150px, 190px) auto;
   margin-top: 16px;
+}
+
+.dateRangeFields {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
 }
 
 .filterPanel button {
@@ -368,6 +374,10 @@ td:nth-child(3) {
 
   .filterPanel {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .dateRangeFields {
+    grid-template-columns: 1fr;
   }
 }
 
