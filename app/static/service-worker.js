@@ -1,4 +1,4 @@
-const CACHE_NAME = "muuc-tripleader-cache-v2";
+const CACHE_NAME = "muuc-tripleader-cache-v3";
 const APP_SHELL = [
   "/",
   "/static/styles.css",
@@ -31,6 +31,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET" || request.url.startsWith("chrome-extension://")) {
+    return;
+  }
+  const url = new URL(request.url);
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(request));
     return;
   }
 

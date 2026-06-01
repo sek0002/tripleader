@@ -548,6 +548,26 @@ def purchase_date_range(df: Optional[pd.DataFrame] = None) -> dict[str, str]:
     return {"start": start, "end": end, "label": f"Available date range: {start} to {end}"}
 
 
+def status_snapshot() -> dict[str, Any]:
+    current = dict(last_sync)
+    store = load_store()
+    synced_at = current.get("at") or (_last_synced_at().isoformat() if _last_synced_at() else None)
+    current["rows"] = int(store.shape[0])
+    current["at"] = synced_at
+    if current.get("ok") is None and synced_at:
+        current["ok"] = True
+        current["message"] = "Using cached purchase data."
+    current["date_range"] = purchase_date_range(store)
+    return current
+
+
+def display_sync_time(value: Any) -> str:
+    parsed = _parse_stored_sync_time(value)
+    if parsed is None:
+        return "never"
+    return parsed.astimezone().strftime("%d/%m/%Y, %I:%M:%S %p")
+
+
 def build_headers() -> dict[str, str]:
     load_dotenv(BASE_DIR / ".env", override=True)
     cookie = os.getenv("TEAMAPP_COOKIE", "").strip()
@@ -794,7 +814,17 @@ def index(request: Request):
     redirect = require_login(request)
     if redirect:
         return redirect
-    return templates.TemplateResponse(request, "index.html")
+    current = status_snapshot()
+    prefix = "Refresh issue" if current.get("ok") is False else "Purchase store"
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "sync_status_text": f"{prefix}: {current.get('rows') or 0} rows. {current.get('message') or ''}",
+            "last_checked_text": f"Last checked: {display_sync_time(current.get('at'))}",
+            "last_checked_at": current.get("at") or "",
+        },
+    )
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -847,11 +877,7 @@ def status(request: Request):
     redirect = require_login(request)
     if redirect:
         return redirect
-    current = dict(last_sync)
-    store = load_store()
-    current["rows"] = int(store.shape[0])
-    current["date_range"] = purchase_date_range(store)
-    return current
+    return status_snapshot()
 
 
 @app.get("/api/names")

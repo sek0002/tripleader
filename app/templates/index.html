@@ -21,8 +21,8 @@
       <section class="toolbar">
         <div class="toolbarStatus">
           <h1>MUUC Trip Leader App</h1>
-          <p id="syncStatus">Preparing purchase store...</p>
-          <p id="lastCheckedStatus" class="lastCheckedStatus">Last checked: loading...</p>
+          <p id="syncStatus">{{ sync_status_text | default("Preparing purchase store...") }}</p>
+          <p id="lastCheckedStatus" class="lastCheckedStatus" data-last-checked-at="{{ last_checked_at | default("") }}">{{ last_checked_text | default("Last checked: loading...") }}</p>
           <p id="dateRangeStatus" class="hidden">Available date range: checking data...</p>
         </div>
         <div class="topActions">

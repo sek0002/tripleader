@@ -38,7 +38,9 @@ let currentMemberPayload = null;
 let availableNames = [];
 let tableSorts = {};
 const FRESHNESS_WINDOW_MS = 15 * 60 * 1000;
-let lastCheckedAtMs = null;
+const initialLastCheckedAt = lastCheckedStatus?.dataset?.lastCheckedAt || "";
+const initialLastCheckedAtMs = initialLastCheckedAt ? Date.parse(initialLastCheckedAt) : NaN;
+let lastCheckedAtMs = Number.isFinite(initialLastCheckedAtMs) ? initialLastCheckedAtMs : null;
 
 function applyFreshnessTone() {
   if (!lastCheckedStatus) return;
@@ -449,6 +451,7 @@ nameInput.addEventListener("keydown", (event) => {
 
 async function loadStatus() {
   const response = await fetch("/api/status");
+  if (!response.ok) return;
   const payload = await response.json();
   setStatus(payload);
 }
@@ -456,8 +459,14 @@ async function loadStatus() {
 async function initApp() {
   try {
     await loadStatus();
-  } finally {
+  } catch {
+    applyFreshnessTone();
+  }
+
+  try {
     await loadNames();
+  } catch {
+    availableNames = [];
   }
   applyFreshnessTone();
   setInterval(applyFreshnessTone, 10000);
