@@ -319,7 +319,7 @@ def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, Union[str,
         if paid_date is None:
             continue
         period, months, segment, detail = duration
-        status_detail = f"{segment} - {detail}".strip()
+        status_detail = detail
         candidates.append((paid_date, status_detail, months))
 
     if not candidates:
@@ -333,7 +333,7 @@ def _hire_status_for_payment_year(matches: pd.DataFrame) -> dict[str, Union[str,
     valid_until = _add_months(paid_date, months)
     return {
         "is_current": paid_date <= now <= valid_until,
-        "label": f"Hire - {status_label}",
+        "label": status_label,
     }
 
 
