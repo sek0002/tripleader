@@ -344,13 +344,17 @@ def _hire_status_for_payment_year(matches: pd.DataFrame) -> Optional[dict[str, U
     return None
 
 
-def is_current_year_membership_paid(item: str, paid: Any, year: int) -> bool:
+def is_current_year_membership_paid(item: str, note: Any, paid: Any, year: int) -> bool:
     if clean_scalar(paid).strip().casefold() != "yes":
         return False
-    normalized_item = clean_scalar(item).casefold()
+    source = f"{clean_scalar(item)} {clean_scalar(note)}".casefold()
+    normalized_item = source
     if "membership" not in normalized_item:
         return False
-    return re.search(rf"(?<!\d){year}(?!\d)", normalized_item) is not None
+    stated_year = _extract_stated_year(source)
+    if stated_year is None:
+        return False
+    return stated_year == year
 
 
 def is_current_year_liability_waiver_paid(item: str, note: Any, paid: Any, year: int) -> bool:
@@ -643,7 +647,12 @@ def member_summary(name: str) -> dict[str, Any]:
     }
 
     current_member = any(
-        is_current_year_membership_paid(clean_scalar(row.get("items")), row.get("paid"), payment_year)
+        is_current_year_membership_paid(
+            row.get("items"),
+            row.get("note"),
+            row.get("paid"),
+            payment_year,
+        )
         for _, row in payment_year_matches.iterrows()
     )
     liability_waiver = any(
