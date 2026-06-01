@@ -81,9 +81,14 @@ h3 {
   margin-bottom: 12px;
 }
 
-#syncStatus {
+#syncStatus,
+#dateRangeStatus {
   color: var(--muted);
   margin-top: 8px;
+}
+
+#dateRangeStatus {
+  font-weight: 700;
 }
 
 button {

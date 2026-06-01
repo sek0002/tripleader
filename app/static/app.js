@@ -1,4 +1,5 @@
 const syncStatus = document.querySelector("#syncStatus");
+const dateRangeStatus = document.querySelector("#dateRangeStatus");
 const menuButton = document.querySelector("#menuButton");
 const pageMenu = document.querySelector("#pageMenu");
 const refreshButton = document.querySelector("#refreshButton");
@@ -38,6 +39,7 @@ function setStatus(payload) {
   const when = payload.at ? new Date(payload.at).toLocaleString() : "never";
   const prefix = payload.ok === false ? "Refresh issue" : "Purchase store";
   syncStatus.textContent = `${prefix}: ${payload.rows || 0} rows, last checked ${when}. ${payload.message || ""}`;
+  dateRangeStatus.textContent = payload.date_range?.label || "Available date range: unavailable";
 }
 
 async function refreshStore() {

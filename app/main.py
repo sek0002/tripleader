@@ -143,6 +143,21 @@ def save_store(df: pd.DataFrame) -> None:
     output.to_csv(STORE_PATH, index=False)
 
 
+def purchase_date_range(df: pd.DataFrame | None = None) -> dict[str, str]:
+    source = load_store() if df is None else df
+    if source.empty or "date" not in source.columns:
+        return {"start": "", "end": "", "label": "Available date range: no purchase data stored"}
+
+    dates = pd.to_datetime(source["date"], format="%Y-%b-%d", errors="coerce")
+    dates = dates.dropna()
+    if dates.empty:
+        return {"start": "", "end": "", "label": "Available date range: no valid dates found"}
+
+    start = dates.min().strftime("%Y-%b-%d")
+    end = dates.max().strftime("%Y-%b-%d")
+    return {"start": start, "end": end, "label": f"Available date range: {start} to {end}"}
+
+
 def build_headers() -> dict[str, str]:
     load_dotenv(BASE_DIR / ".env", override=True)
     cookie = os.getenv("TEAMAPP_COOKIE", "").strip()
@@ -194,7 +209,9 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
             }
 
         last_sync.update(status)
-        return dict(last_sync)
+        result = dict(last_sync)
+        result["date_range"] = purchase_date_range(load_store())
+        return result
 
 
 def hourly_worker() -> None:
@@ -326,7 +343,9 @@ def status(request: Request):
     if redirect:
         return redirect
     current = dict(last_sync)
-    current["rows"] = int(load_store().shape[0])
+    store = load_store()
+    current["rows"] = int(store.shape[0])
+    current["date_range"] = purchase_date_range(store)
     return current
 
 
