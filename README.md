@@ -11,10 +11,10 @@ python3 -m pip install -r requirements.txt
 ```
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8999
 ```
 
-Open <http://127.0.0.1:8000>.
+Open <http://127.0.0.1:8999>.
 
 ## Environment
 
@@ -55,7 +55,7 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 If your host does not provide `$PORT`, use a fixed port:
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8999
 ```
 
 ### Render-Style Web Service
@@ -100,7 +100,7 @@ After=network.target
 [Service]
 WorkingDirectory=/path/to/tripleader
 EnvironmentFile=/path/to/tripleader/.env
-ExecStart=/path/to/tripleader/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+ExecStart=/path/to/tripleader/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8999
 Restart=always
 
 [Install]
