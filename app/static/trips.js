@@ -336,6 +336,7 @@ function renderTripCard(trip) {
 
 async function renderTripMembers(card, trip) {
   const memberList = card.querySelector(".tripMembers");
+  const addMemberBar = card.querySelector(".tripMemberAddBar");
   const transactionSection = card.querySelector(".tripTransactions");
   memberList.replaceChildren();
   transactionSection.replaceChildren();
@@ -409,6 +410,7 @@ async function renderTripMembers(card, trip) {
     memberList.append(row);
   });
 
+  memberList.append(addMemberBar);
   renderTransactions(transactionSection, details.flatMap((detail) => detail.transactions || []));
 }
 

@@ -821,8 +821,16 @@ td:nth-child(3) {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(150px, 190px) minmax(130px, 170px) minmax(190px, 1fr) minmax(190px, 1fr) minmax(220px, 1.3fr) auto;
+  grid-template-columns: minmax(150px, 190px) minmax(130px, 170px) minmax(220px, 1fr) auto;
   margin-bottom: 18px;
+}
+
+.tripCreateTitleField {
+  grid-column: 1 / span 2;
+}
+
+.tripCreatePanel .titleSuggestionWrap {
+  grid-column: 3 / -1;
 }
 
 .titleSuggestionWrap {
@@ -974,9 +982,13 @@ td:nth-child(3) {
 }
 
 .tripMemberAddBar {
-  align-items: start;
+  align-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
   display: flex;
   gap: 10px;
+  min-height: 92px;
+  padding: 12px;
 }
 
 .addMemberToggleButton {
@@ -1042,6 +1054,12 @@ td:nth-child(3) {
   min-height: 28px;
   padding: 0;
   text-align: left;
+}
+
+.tripMemberNameButton strong {
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.15;
 }
 
 .tripMemberNameButton:hover {
@@ -1147,6 +1165,11 @@ td:nth-child(3) {
   .tripCreatePanel,
   .tripCardHeader {
     grid-template-columns: 1fr;
+  }
+
+  .tripCreateTitleField,
+  .tripCreatePanel .titleSuggestionWrap {
+    grid-column: auto;
   }
 
   .tripMembers {
