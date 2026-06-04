@@ -1150,7 +1150,7 @@ td:nth-child(3) {
 }
 
 .tripMemberRow {
-  border: 1px solid var(--line);
+  border: 2px dotted color-mix(in srgb, var(--line) 72%, var(--ink));
   border-radius: 8px;
   display: grid;
   gap: 8px;
