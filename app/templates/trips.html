@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=45">
+    <link rel="stylesheet" href="/static/styles.css?v=46">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
@@ -25,14 +25,14 @@
         </div>
         <div class="topActions">
           <nav class="pageSwitch" aria-label="Page switcher">
-            <a class="pageSwitchItem" href="/">Home</a>
+            <a class="pageSwitchItem" href="/">Search</a>
             <a class="pageSwitchItem isActive" href="/trips">Plan</a>
           </nav>
           <button id="refreshButton" type="button">Refresh</button>
           <div class="menuWrap">
             <button id="menuButton" class="menuButton secondaryButton" type="button" aria-expanded="false" aria-controls="pageMenu">Menu</button>
             <div id="pageMenu" class="pageMenu hidden">
-              <a class="menuItem" href="/">Home</a>
+              <a class="menuItem" href="/">Search</a>
               <a class="menuItem" href="/trips">Plan Trips</a>
               <a class="menuItem" href="/trips/archive">Archive</a>
               <button class="themeToggle menuItem" type="button" data-theme-toggle aria-label="Switch to dark mode">Dark</button>
@@ -147,7 +147,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=45"></script>
-    <script src="/static/trips.js?v=45"></script>
+    <script src="/static/theme.js?v=46"></script>
+    <script src="/static/trips.js?v=46"></script>
   </body>
 </html>
