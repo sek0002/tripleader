@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=38">
+    <link rel="stylesheet" href="/static/styles.css?v=41">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
@@ -132,7 +132,6 @@
               <input class="tripMemberInput" type="text" autocomplete="off" placeholder="Start typing a member name" aria-autocomplete="list">
               <div class="nameSuggestions hidden" role="listbox"></div>
             </div>
-            <button class="addTripMemberButton" type="button">Add</button>
           </div>
         </div>
 
@@ -141,7 +140,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=38"></script>
-    <script src="/static/trips.js?v=38"></script>
+    <script src="/static/theme.js?v=41"></script>
+    <script src="/static/trips.js?v=41"></script>
   </body>
 </html>

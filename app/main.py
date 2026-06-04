@@ -364,6 +364,21 @@ def is_current_year_membership_paid(item: str, note: Any, paid: Any) -> bool:
     return start <= now < end
 
 
+def _current_membership_year() -> int:
+    today = datetime.now(timezone.utc).date()
+    return today.year if today >= date(today.year, 3, 1) else today.year - 1
+
+
+def _current_status_year_label(matches: pd.DataFrame, matcher: Any, fallback_prefix: str) -> str:
+    for _, row in matches.iterrows():
+        if matcher(row.get("items"), row.get("note"), row.get("paid")):
+            source = f"{clean_scalar(row.get('items'))} {clean_scalar(row.get('note'))}".casefold()
+            stated_year = _extract_stated_year(source)
+            if stated_year is not None:
+                return f"{fallback_prefix} {stated_year}"
+    return f"{fallback_prefix} {_current_membership_year()}"
+
+
 def is_current_year_liability_waiver_paid(item: str, note: Any, paid: Any) -> bool:
     if clean_scalar(paid).strip().casefold() != "yes":
         return False
@@ -772,6 +787,7 @@ def member_summary(name: str) -> dict[str, Any]:
         )
         for _, row in matches.iterrows()
     )
+    membership_label = _current_status_year_label(matches, is_current_year_membership_paid, "Membership")
     liability_waiver = any(
         is_current_year_liability_waiver_paid(
             row.get("items"),
@@ -780,6 +796,7 @@ def member_summary(name: str) -> dict[str, Any]:
         )
         for _, row in matches.iterrows()
     )
+    liability_waiver_label = _current_status_year_label(matches, is_current_year_liability_waiver_paid, "Liability Waiver")
     hire_status = _hire_status_for_payment_year(hire_status_matches)
 
     grouped: dict[str, list[dict[str, str]]] = {category: [] for category, _ in CATEGORIES}
@@ -805,11 +822,11 @@ def member_summary(name: str) -> dict[str, Any]:
         "emergency": emergency,
         "membership_status": {
             "is_current": current_member,
-            "label": "Current Member",
+            "label": membership_label,
         },
         "liability_waiver_status": {
             "is_current": liability_waiver,
-            "label": "Liability Waiver",
+            "label": liability_waiver_label,
         },
         "hire_status": hire_status,
         "categories": grouped,
@@ -856,14 +873,14 @@ def _boat_payment_status(name: str, trip_date_value: Any, boat_selected: bool) -
         item_text = clean_scalar(row.get("items")).casefold()
         paid_date = _trip_date(row.get("date"))
         if paid and paid_date and paid_date >= week_ago and "boat" in item_text:
-            return {"is_current": True, "label": "Boat Paid"}
+            return {"is_current": True, "label": "Boat Fee Paid"}
 
     trip_day = _trip_date(trip_date_value)
     if trip_day is not None:
         trip_datetime = datetime.combine(trip_day, datetime.min.time(), tzinfo=timezone.utc)
         hours_until_trip = (trip_datetime - now).total_seconds() / 3600
         if 0 <= hours_until_trip <= 72:
-            return {"is_current": False, "label": "Payment Overdue"}
+            return {"is_current": False, "label": "Boat Fee Overdue"}
 
     return None
 

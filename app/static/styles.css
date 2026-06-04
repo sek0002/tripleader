@@ -384,15 +384,16 @@ button:disabled {
   width: 28px;
 }
 
-.statusBadge--membership svg {
+.statusBadge--membership svg,
+.statusBadge--liability svg,
+.statusBadge--hire svg {
   display: block;
   height: 17px;
   width: 17px;
 }
 
 .statusBadge--hire {
-  min-width: 34px;
-  white-space: nowrap;
+  width: 28px;
 }
 
 .statusBadge--boat {
@@ -1008,7 +1009,7 @@ td:nth-child(3) {
 .tripMemberLookup {
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(180px, 320px) auto;
+  grid-template-columns: minmax(180px, 320px);
   margin-bottom: 0;
   overflow: visible;
 }

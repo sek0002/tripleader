@@ -29,14 +29,16 @@ function text(value) {
 }
 
 function statusMarkup(isCurrent, label, type = "membership") {
-  const badgeText = type === "liability" ? "LW" : type === "hire" ? "GH" : "M";
   const visible = type === "boat"
     ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 13.2 6.4 7.8h6.9l4.2 5.4H20l-1.7 4.1c-.8.4-1.6.6-2.4.6-1 0-1.8-.3-2.6-.8-.8.5-1.6.8-2.6.8s-1.8-.3-2.6-.8c-.8.5-1.6.8-2.6.8-.7 0-1.4-.2-2.1-.5L2 13.2h2Zm3.7-1.4h7.4l-2.4-3.1H9.1l-1.4 3.1Z" fill="currentColor"></path></svg>'
     : type === "membership"
       ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M5 6.2c0-1 .8-1.8 1.8-1.8h10.4c1 0 1.8.8 1.8 1.8v11.6c0 1-.8 1.8-1.8 1.8H6.8c-1 0-1.8-.8-1.8-1.8V6.2Zm3.2 3.1h7.6V7.8H8.2v1.5Zm0 3.2h7.6V11H8.2v1.5Zm0 3.2h4.9v-1.5H8.2v1.5Z" fill="currentColor"></path></svg>'
-      : badgeText;
-  const overdueText = type === "boat" && !isCurrent ? '<small class="statusBadgeCaption">overdue</small>' : "";
-  return `<span class="statusBadgeWrap"><span class="statusBadge statusBadge--${type}" title="${label}" aria-label="${label} ${isCurrent ? "current" : "not current"}">${visible}</span>${overdueText}</span>`;
+      : type === "liability"
+        ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M7 3.8h7.8L19 8v12.2H7V3.8Zm7 1.9v3h3L14 5.7ZM9 11h8V9.6H9V11Zm0 3.2h8v-1.4H9v1.4Zm0 3.2h5.5V16H9v1.4Z" fill="currentColor"></path></svg>'
+        : '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M8.6 7.2c1.7-1.5 5.1-1.5 6.8 0l1.2 1.1-1.4 1.5-1.2-1.1c-.9-.8-3.1-.8-4 0L8.8 9.8 7.4 8.3l1.2-1.1Zm-2.2 4.1c.8-.7 2.1-.7 2.9.1l1.6 1.6c.6-.2 1.6-.2 2.2 0l1.6-1.6c.8-.8 2.1-.8 2.9-.1.9.8.9 2.2.1 3l-2.5 2.5c-1.7 1.7-4.7 1.7-6.4 0l-2.5-2.5c-.8-.8-.8-2.2.1-3Zm4.1 4.1c.8.8 2.2.8 3 0l-1.1-1.1c-.2-.2-.6-.2-.8 0l-1.1 1.1Z" fill="currentColor"></path></svg>';
+  const caption = type === "boat" && !isCurrent ? "overdue" : type === "membership" ? "Member" : type === "liability" ? "Liability" : type === "hire" ? "Gear" : "";
+  const captionText = caption ? `<small class="statusBadgeCaption">${caption}</small>` : "";
+  return `<span class="statusBadgeWrap"><span class="statusBadge statusBadge--${type}" title="${label}" aria-label="${label} ${isCurrent ? "current" : "not current"}">${visible}</span>${captionText}</span>`;
 }
 
 function appendTitleSuggestion(input, suggestion) {
@@ -324,12 +326,6 @@ function renderTripCard(trip) {
       closeSuggestions(suggestions);
     }
   });
-  card.querySelector(".addTripMemberButton").addEventListener("click", () => {
-    addMember(memberInput.value.trim());
-    memberInput.value = "";
-    closeSuggestions(suggestions);
-  });
-
   tripCards.append(card);
   renderTripMembers(card, trip);
 }
@@ -384,7 +380,7 @@ async function renderTripMembers(card, trip) {
 
     const statuses = document.createElement("div");
     statuses.className = "memberStatusRow tripMemberStatuses";
-    appendStatus(statuses, Boolean(detail.membership_status?.is_current), "Current Member", "membership");
+    appendStatus(statuses, Boolean(detail.membership_status?.is_current), detail.membership_status?.label || "Membership", "membership");
     appendStatus(statuses, Boolean(detail.liability_waiver_status?.is_current), detail.liability_waiver_status?.label || "Liability Waiver", "liability");
     if (detail.hire_status?.is_current) appendStatus(statuses, true, detail.hire_status.label || "Hire", "hire");
     if (detail.boat_payment_status) appendStatus(statuses, Boolean(detail.boat_payment_status.is_current), detail.boat_payment_status.label, "boat");
@@ -612,6 +608,13 @@ document.addEventListener("click", (event) => {
   });
   document.querySelectorAll(".nameSuggestions").forEach((suggestions) => {
     if (!suggestions.closest(".autocompleteWrap").contains(event.target)) closeSuggestions(suggestions);
+  });
+  document.querySelectorAll(".tripMemberAddBar").forEach((bar) => {
+    if (bar.contains(event.target)) return;
+    const lookup = bar.querySelector(".tripMemberLookup");
+    const toggle = bar.querySelector(".addMemberToggleButton");
+    lookup.classList.add("hidden");
+    toggle.setAttribute("aria-expanded", "false");
   });
 });
 
