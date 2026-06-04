@@ -34,7 +34,6 @@ TEAMAPP_PAGE_RANGE = range(1, 7)
 TEAMAPP_REFRESH_PAGE_RANGE = range(1, 2)
 SYNC_INTERVAL_SECONDS = 60 * 60
 SYNC_STALE_SECONDS = 15 * 60
-TRIP_CARD_PATTERNS = ["aqua", "ember", "violet", "moss", "steel", "copper", "aurora", "midnight"]
 
 CATEGORIES = [
     ("Hire", ["hire"]),
@@ -916,6 +915,20 @@ def _trips_for_archive(archived: bool) -> list[dict[str, Any]]:
     return [trip for trip in _load_trips() if _trip_is_archived(trip) == archived]
 
 
+def _default_trip_pattern(trip_id: str) -> str:
+    seed = sum((index + 1) * ord(character) for index, character in enumerate(trip_id))
+    values = [
+        12 + seed % 76,
+        10 + (seed // 3) % 78,
+        12 + (seed // 5) % 76,
+        10 + (seed // 7) % 78,
+        12 + (seed // 11) % 76,
+        10 + (seed // 13) % 78,
+        seed % 180,
+    ]
+    return "r-" + "-".join(str(value) for value in values)
+
+
 def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = None) -> dict[str, Any]:
     trip_id = existing_id or clean_scalar(payload.get("id")) or f"trip-{int(time.time() * 1000)}"
     members = payload.get("members", [])
@@ -942,8 +955,8 @@ def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = No
     title = "" if title.casefold() == "trip" else title
     title = f"{trip_type} {title}".strip()
     pattern = clean_scalar(payload.get("pattern"))
-    if pattern not in TRIP_CARD_PATTERNS:
-        pattern = TRIP_CARD_PATTERNS[abs(hash(trip_id)) % len(TRIP_CARD_PATTERNS)]
+    if not re.fullmatch(r"r(?:-\d{1,3}){7}", pattern):
+        pattern = _default_trip_pattern(trip_id)
     return {
         "id": trip_id,
         "date": clean_scalar(payload.get("date")),

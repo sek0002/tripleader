@@ -17,7 +17,6 @@ let availableNames = [];
 let trips = [];
 let tripSortDirection = "asc";
 let countdownTimer = null;
-const TRIP_CARD_PATTERNS = ["aqua", "ember", "violet", "moss", "steel", "copper", "aurora", "midnight"];
 const TRANSACTION_CATEGORIES = [
   { name: "Hire", needles: ["hire"] },
   { name: "Car Fee", needles: ["car fee"] },
@@ -100,6 +99,37 @@ function orderedTripMembers(trip) {
   const members = Array.isArray(trip.members) ? [...trip.members] : [];
   if (!trip.organizer) return members;
   return [trip.organizer, ...members.filter((member) => member !== trip.organizer)];
+}
+
+function randomTripPattern() {
+  const values = [
+    12 + Math.floor(Math.random() * 76),
+    10 + Math.floor(Math.random() * 78),
+    12 + Math.floor(Math.random() * 76),
+    10 + Math.floor(Math.random() * 78),
+    12 + Math.floor(Math.random() * 76),
+    10 + Math.floor(Math.random() * 78),
+    Math.floor(Math.random() * 180),
+  ];
+  return `r-${values.join("-")}`;
+}
+
+function fallbackTripPattern(tripId) {
+  const source = String(tripId || "trip");
+  const seed = [...source].reduce((total, character, index) => total + character.charCodeAt(0) * (index + 1), 0);
+  return `r-${12 + (seed % 76)}-${10 + (Math.floor(seed / 3) % 78)}-${12 + (Math.floor(seed / 5) % 76)}-${10 + (Math.floor(seed / 7) % 78)}-${12 + (Math.floor(seed / 11) % 76)}-${10 + (Math.floor(seed / 13) % 78)}-${seed % 180}`;
+}
+
+function applyTripPattern(card, trip) {
+  const pattern = /^r(?:-\d{1,3}){7}$/.test(trip.pattern || "") ? trip.pattern : fallbackTripPattern(trip.id);
+  const [, p1x, p1y, p2x, p2y, p3x, p3y, angle] = pattern.split("-").map(Number);
+  card.style.setProperty("--p1x", `${p1x}%`);
+  card.style.setProperty("--p1y", `${p1y}%`);
+  card.style.setProperty("--p2x", `${p2x}%`);
+  card.style.setProperty("--p2y", `${p2y}%`);
+  card.style.setProperty("--p3x", `${p3x}%`);
+  card.style.setProperty("--p3y", `${p3y}%`);
+  card.style.setProperty("--shimmer-angle", `${angle}deg`);
 }
 
 function countdownLabel(tripDate) {
@@ -254,7 +284,7 @@ function renderTripCard(trip) {
   const memberInput = card.querySelector(".tripMemberInput");
   const suggestions = card.querySelector(".tripMemberLookup .nameSuggestions");
 
-  card.dataset.tripPattern = trip.pattern || "aqua";
+  applyTripPattern(card, trip);
   titleInput.value = trip.title || "Trip";
   dateInput.value = trip.date || "";
   trip.trip_type = normalizeTripType(trip.trip_type) || (isBoatTrip(trip) ? "Boat" : "Other");
@@ -584,7 +614,7 @@ if (createTripButton) {
         title: ensureTitleHasType(tripTitleInput.value, tripType),
       trip_type: tripType,
       organizer: tripOrganizerInput.value.trim(),
-      pattern: TRIP_CARD_PATTERNS[Math.floor(Math.random() * TRIP_CARD_PATTERNS.length)],
+      pattern: randomTripPattern(),
       members: [],
     }),
     });
