@@ -15,6 +15,7 @@ const nameInput = document.querySelector("#nameInput");
 const nameSuggestions = document.querySelector("#nameSuggestions");
 const emptyState = document.querySelector("#emptyState");
 const memberPanel = document.querySelector("#memberPanel");
+const memberInfo = document.querySelector("#memberInfo");
 const memberName = document.querySelector("#memberName");
 const membershipStatus = document.querySelector("#membershipStatus");
 const liabilityWaiverStatus = document.querySelector("#liabilityWaiverStatus");
@@ -87,12 +88,12 @@ function text(value) {
   return value && String(value).trim() ? String(value).trim() : "Not supplied";
 }
 
-function statusMarkup(isCurrent, label) {
-  const icon = isCurrent
-    ? '<span class="membershipIcon" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M5.8 10.4 9 13.4 14.3 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>'
-    : '<span class="membershipIcon" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M6.5 6.5 13.5 13.5M13.5 6.5 6.5 13.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>';
-
-  return `${icon}<span>${label}</span>`;
+function statusMarkup(isCurrent, label, type = "membership") {
+  const badgeText = type === "liability" ? "LW" : type === "hire" ? "GH" : "M";
+  const visible = type === "boat"
+    ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 13.2 6.4 7.8h6.9l4.2 5.4H20l-1.7 4.1c-.8.4-1.6.6-2.4.6-1 0-1.8-.3-2.6-.8-.8.5-1.6.8-2.6.8s-1.8-.3-2.6-.8c-.8.5-1.6.8-2.6.8-.7 0-1.4-.2-2.1-.5L2 13.2h2Zm3.7-1.4h7.4l-2.4-3.1H9.1l-1.4 3.1Z" fill="currentColor"></path></svg>'
+    : badgeText;
+  return `<span class="statusBadge statusBadge--${type}" title="${label}" aria-label="${label} ${isCurrent ? "current" : "not current"}">${visible}</span>`;
 }
 
 function setStatus(payload) {
@@ -364,17 +365,19 @@ function renderMember(payload) {
 
   emptyState.classList.add("hidden");
   memberPanel.classList.remove("hidden");
+  memberInfo.open = false;
   memberName.textContent = payload.name;
   const isCurrentMember = Boolean(payload.membership_status?.is_current);
   membershipStatus.classList.toggle("isCurrentMember", isCurrentMember);
   membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
-  membershipStatus.innerHTML = statusMarkup(isCurrentMember, "Current Member");
+  membershipStatus.innerHTML = statusMarkup(isCurrentMember, "Current Member", "membership");
   const hasCurrentLiabilityWaiver = Boolean(payload.liability_waiver_status?.is_current);
   liabilityWaiverStatus.classList.toggle("isCurrentMember", hasCurrentLiabilityWaiver);
   liabilityWaiverStatus.classList.toggle("isNotCurrentMember", !hasCurrentLiabilityWaiver);
   liabilityWaiverStatus.innerHTML = statusMarkup(
     hasCurrentLiabilityWaiver,
-    payload.liability_waiver_status?.label || "Liability Waiver"
+    payload.liability_waiver_status?.label || "Liability Waiver",
+    "liability"
   );
   memberEmail.textContent = text(payload.contact?.email);
   memberPhone.textContent = text(payload.contact?.phone);
@@ -386,7 +389,7 @@ function renderMember(payload) {
   const isCurrentHire = Boolean(payload.hire_status?.is_current);
   if (isCurrentHire) {
     hireStatus.classList.add("isCurrentMember");
-    hireStatus.innerHTML = statusMarkup(true, payload.hire_status?.label || "Hire");
+    hireStatus.innerHTML = statusMarkup(true, payload.hire_status?.label || "Hire", "hire");
     hireStatus.classList.remove("hidden");
   }
 

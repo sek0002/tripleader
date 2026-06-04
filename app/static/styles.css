@@ -34,11 +34,6 @@
   --red-bg: #471f1c;
 }
 
-:root[data-theme="dark"] .tripCreatePanel {
-  background: #163a36;
-  border-color: #2b8d80;
-}
-
 :root[data-theme="dark"] .homeButton {
   background: #246b3f;
 }
@@ -316,6 +311,35 @@ button:disabled {
 }
 
 .membershipIcon svg {
+  display: block;
+  height: 18px;
+  width: 18px;
+}
+
+.statusBadge {
+  align-items: center;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 900;
+  height: 28px;
+  justify-content: center;
+  letter-spacing: -0.02em;
+  min-width: 28px;
+  padding: 0 5px;
+}
+
+.statusBadge--membership,
+.statusBadge--hire {
+  width: 28px;
+}
+
+.statusBadge--boat {
+  width: 32px;
+}
+
+.statusBadge--boat svg {
   display: block;
   height: 18px;
   width: 18px;
@@ -735,8 +759,6 @@ td:nth-child(3) {
 
 .tripCreatePanel {
   align-items: end;
-  background: #e1f4f1;
-  border-color: #7fc8bf;
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(150px, 190px) minmax(130px, 170px) minmax(190px, 1fr) minmax(190px, 1fr) minmax(220px, 1.3fr) auto;
@@ -811,12 +833,28 @@ td:nth-child(3) {
   border-color: var(--accent);
 }
 
+.tripCard .tripOrganizerEditWrap {
+  display: none;
+}
+
 .tripDateEdit {
   max-width: 210px;
 }
 
 .tripTypeEdit {
   max-width: 170px;
+}
+
+.tripCard .tripDateEdit,
+.tripCard .tripTypeEdit {
+  background: transparent;
+  border-color: transparent;
+}
+
+.tripCard .tripDateEdit:focus,
+.tripCard .tripTypeEdit:focus {
+  background: var(--field);
+  border-color: var(--accent);
 }
 
 .tripCountdown {
@@ -932,7 +970,37 @@ td:nth-child(3) {
 }
 
 .removeTripMemberButton {
-  min-height: 34px;
+  align-items: center;
+  align-self: start;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--red);
+  display: inline-flex;
+  font-size: 22px;
+  font-weight: 900;
+  height: 30px;
+  justify-content: center;
+  line-height: 1;
+  min-height: 30px;
+  opacity: 0;
+  padding: 0;
+  transform: scale(0.88);
+  transition: opacity 160ms ease, transform 160ms ease, background 160ms ease;
+  width: 30px;
+}
+
+.tripMemberRow:hover .removeTripMemberButton,
+.tripMemberRow:focus-within .removeTripMemberButton {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.removeTripMemberButton:hover,
+.removeTripMemberButton:focus {
+  background: var(--red-bg);
+  border-color: currentColor;
+  color: var(--red);
 }
 
 .tripTransactions {

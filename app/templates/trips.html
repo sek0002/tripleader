@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=19">
+    <link rel="stylesheet" href="/static/styles.css?v=23">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
@@ -27,8 +27,6 @@
           <a class="buttonLink homeButton" href="/">Home</a>
           {% if archive_mode %}
           <a class="buttonLink secondaryButton" href="/trips">Plan Trips</a>
-          {% else %}
-          <a class="buttonLink secondaryButton" href="/trips/archive">Archive</a>
           {% endif %}
           <button id="refreshButton" type="button">Refresh</button>
           <div class="menuWrap">
@@ -141,7 +139,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=19"></script>
-    <script src="/static/trips.js?v=19"></script>
+    <script src="/static/theme.js?v=23"></script>
+    <script src="/static/trips.js?v=23"></script>
   </body>
 </html>
