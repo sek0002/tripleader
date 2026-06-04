@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f6d7a">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="MUUC Trips">
+    <meta name="apple-mobile-web-app-title" content="MUUC Trip Organizer">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/static/manifest.webmanifest">
     <link rel="icon" type="image/png" href="/static/icons/muuc-logo-backdrop.png">
     <link rel="apple-touch-icon" href="/static/icons/muuc-logo-backdrop.png">
-    <title>Plan Trips - MUUC</title>
+    <title>MUUC Trip Organizer</title>
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=31">
+    <link rel="stylesheet" href="/static/styles.css?v=36">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
@@ -24,10 +24,10 @@
           <p id="syncStatus">{{ "Past-dated dive cards are automatically archived here." if archive_mode else "Create and track planned dive cards." }}</p>
         </div>
         <div class="topActions">
-          <a class="buttonLink homeButton" href="/">Home</a>
-          {% if archive_mode %}
-          <a class="buttonLink secondaryButton" href="/trips">Plan Trips</a>
-          {% endif %}
+          <nav class="pageSwitch" aria-label="Page switcher">
+            <a class="pageSwitchItem" href="/">Home</a>
+            <a class="pageSwitchItem isActive" href="/trips">Plan</a>
+          </nav>
           <button id="refreshButton" type="button">Refresh</button>
           <div class="menuWrap">
             <button id="menuButton" class="menuButton secondaryButton" type="button" aria-expanded="false" aria-controls="pageMenu">Menu</button>
@@ -120,14 +120,14 @@
               </svg>
             </button>
             <div class="pinMenu hidden">
-              <button class="deleteTripButton menuItem" type="button">Delete entry</button>
+              <button class="deleteTripButton menuItem" type="button">Delete</button>
             </div>
           </div>
         </div>
 
-        <div class="lookup tripMemberLookup">
-          <label>Members</label>
-          <div class="searchRow">
+        <div class="tripMemberAddBar">
+          <button class="addMemberToggleButton" type="button" aria-expanded="false" aria-label="Add member">+</button>
+          <div class="tripMemberLookup hidden">
             <div class="autocompleteWrap">
               <input class="tripMemberInput" type="text" autocomplete="off" placeholder="Start typing a member name" aria-autocomplete="list">
               <div class="nameSuggestions hidden" role="listbox"></div>
@@ -141,7 +141,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=31"></script>
-    <script src="/static/trips.js?v=31"></script>
+    <script src="/static/theme.js?v=36"></script>
+    <script src="/static/trips.js?v=36"></script>
   </body>
 </html>

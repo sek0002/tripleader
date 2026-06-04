@@ -222,6 +222,8 @@ function renderTripCard(trip) {
   const countdown = card.querySelector(".tripCountdown");
   const pinButton = card.querySelector(".pinButton");
   const pinMenu = card.querySelector(".pinMenu");
+  const addMemberToggleButton = card.querySelector(".addMemberToggleButton");
+  const memberLookup = card.querySelector(".tripMemberLookup");
   const memberInput = card.querySelector(".tripMemberInput");
   const suggestions = card.querySelector(".tripMemberLookup .nameSuggestions");
 
@@ -302,7 +304,15 @@ function renderTripCard(trip) {
     trip.members = orderedTripMembers(trip);
     await saveTrip(trip);
     await renderTripMembers(card, trip);
+    memberLookup.classList.add("hidden");
+    addMemberToggleButton.setAttribute("aria-expanded", "false");
   };
+
+  addMemberToggleButton.addEventListener("click", () => {
+    const isHidden = memberLookup.classList.toggle("hidden");
+    addMemberToggleButton.setAttribute("aria-expanded", String(!isHidden));
+    if (!isHidden) memberInput.focus();
+  });
 
   memberInput.addEventListener("input", () => renderSuggestions(memberInput, suggestions, addMember));
   memberInput.addEventListener("focus", () => renderSuggestions(memberInput, suggestions, addMember));
@@ -415,7 +425,16 @@ function transactionCategory(itemText) {
   return category?.name || "";
 }
 
+function recentTripTransactions(transactions) {
+  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+  return transactions.filter((transaction) => {
+    const timestamp = Date.parse(transaction.date);
+    return Number.isFinite(timestamp) && timestamp >= cutoff;
+  });
+}
+
 function renderTransactions(container, transactions) {
+  const recentTransactions = recentTripTransactions(transactions);
   const details = document.createElement("details");
   details.className = "searchDropdown tripTransactionSummary";
   const summary = document.createElement("summary");
@@ -423,17 +442,49 @@ function renderTransactions(container, transactions) {
   summary.textContent = "Transactions";
   details.append(summary);
 
-  if (!transactions.length) {
+  if (!recentTransactions.length) {
     const empty = document.createElement("section");
     empty.className = "empty";
-    empty.textContent = "No transactions found for selected members.";
+    empty.textContent = "No transactions found for selected members in the last 2 weeks.";
     details.append(empty);
     container.append(details);
     return;
   }
 
+  const filterInput = document.createElement("input");
+  filterInput.className = "tripTransactionFilter";
+  filterInput.type = "search";
+  filterInput.autocomplete = "off";
+  filterInput.placeholder = "Filter transactions";
+  details.append(filterInput);
+
+  const transactionRows = document.createElement("div");
+  transactionRows.className = "tripTransactionRows";
+  details.append(transactionRows);
+
+  const renderFilteredTransactions = () => {
+    transactionRows.replaceChildren();
+    const query = filterInput.value.trim().toLowerCase();
+    const filteredTransactions = query
+      ? recentTransactions.filter((transaction) =>
+          [transaction.name, transaction.date, transaction.paid, transaction.total, transaction.items]
+            .map(text)
+            .join(" ")
+            .toLowerCase()
+            .includes(query)
+        )
+      : recentTransactions;
+
+    if (!filteredTransactions.length) {
+      const empty = document.createElement("section");
+      empty.className = "empty";
+      empty.textContent = "No transactions match this filter.";
+      transactionRows.append(empty);
+      return;
+    }
+
   const grouped = new Map(TRANSACTION_CATEGORIES.map((category) => [category.name, []]));
-  transactions.forEach((transaction) => {
+  filteredTransactions.forEach((transaction) => {
     const category = transactionCategory(transaction.items);
     if (category) grouped.get(category).push(transaction);
   });
@@ -447,15 +498,19 @@ function renderTransactions(container, transactions) {
     heading.textContent = category;
     section.append(heading, transactionTable(rows));
     renderedRows += rows.length;
-    details.append(section);
+    transactionRows.append(section);
   });
 
   if (!renderedRows) {
     const empty = document.createElement("section");
     empty.className = "empty";
     empty.textContent = "No categorized transactions found for selected members.";
-    details.append(empty);
+    transactionRows.append(empty);
   }
+  };
+
+  filterInput.addEventListener("input", renderFilteredTransactions);
+  renderFilteredTransactions();
 
   container.append(details);
 }

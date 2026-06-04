@@ -1,7 +1,7 @@
 {
-  "name": "MUUC Trip Leader App",
-  "short_name": "MUUC Trips",
-  "description": "MUUC membership and purchase lookup app.",
+  "name": "MUUC Trip Organizer",
+  "short_name": "MUUC Organizer",
+  "description": "MUUC trip planning, membership, and purchase lookup app.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

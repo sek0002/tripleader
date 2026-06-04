@@ -196,6 +196,39 @@ button:disabled {
   gap: 10px;
 }
 
+.pageSwitch {
+  background: var(--secondary);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-grid;
+  gap: 3px;
+  grid-template-columns: 1fr 1fr;
+  min-height: 42px;
+  padding: 3px;
+}
+
+.pageSwitchItem {
+  align-items: center;
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  min-width: 72px;
+  padding: 0 14px;
+  text-decoration: none;
+}
+
+.pageSwitchItem:hover {
+  color: var(--ink);
+}
+
+.pageSwitchItem.isActive {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 8px 22px rgba(15, 109, 122, 0.24);
+}
+
 .menuWrap {
   position: relative;
 }
@@ -932,14 +965,44 @@ td:nth-child(3) {
   z-index: 20;
 }
 
+.deleteTripButton {
+  color: var(--red);
+}
+
 .tripSuggestionWrap {
   margin-top: -6px;
 }
 
+.tripMemberAddBar {
+  align-items: start;
+  display: flex;
+  gap: 10px;
+}
+
+.addMemberToggleButton {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 24px;
+  font-weight: 900;
+  height: 42px;
+  justify-content: center;
+  line-height: 1;
+  min-height: 42px;
+  padding: 0;
+  width: 42px;
+}
+
 .tripMemberLookup {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 320px) auto;
   margin-bottom: 0;
   overflow: visible;
-  padding: 16px;
+}
+
+.tripMemberLookup.hidden {
+  display: none;
 }
 
 .tripMembers {
@@ -1057,6 +1120,16 @@ td:nth-child(3) {
   margin-top: 0;
 }
 
+.tripTransactionFilter {
+  margin-top: 10px;
+  max-width: 420px;
+}
+
+.tripTransactionRows {
+  display: grid;
+  gap: 12px;
+}
+
 .tripTransactionSummary .categorySection {
   margin-top: 12px;
 }
@@ -1089,7 +1162,16 @@ td:nth-child(3) {
   .topActions {
     align-items: stretch;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr auto;
+  }
+
+  .pageSwitch {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .pageSwitchItem {
+    min-width: 0;
   }
 
   .tripMetaLine {
@@ -1116,5 +1198,18 @@ td:nth-child(3) {
 
   .tripMembers {
     grid-template-columns: 1fr;
+  }
+
+  .tripMemberAddBar,
+  .tripMemberLookup {
+    display: grid;
+  }
+
+  .tripMemberLookup {
+    grid-template-columns: 1fr;
+  }
+
+  .tripMemberLookup.hidden {
+    display: none;
   }
 }
