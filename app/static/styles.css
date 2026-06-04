@@ -781,15 +781,15 @@ td:nth-child(3) {
   }
 
   .memberStatusRow {
-    display: grid;
+    display: flex;
     gap: 9px;
     margin-top: -4px;
   }
 
   .membershipStatus {
-    display: flex;
+    display: inline-flex;
     line-height: 1.3;
-    width: 100%;
+    width: auto;
   }
 
   .emergencyGrid {
@@ -1285,7 +1285,7 @@ td:nth-child(3) {
   }
 
   .tripMembers {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .tripMemberAddBar,
