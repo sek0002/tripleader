@@ -568,11 +568,16 @@ function transactionTable(transactions) {
 if (createTripButton) {
   createTripButton.addEventListener("click", async () => {
     const tripType = normalizeTripType(tripTypeInput.value);
-    if (!tripType) {
-      tripTypeInput.reportValidity();
-      return;
-    }
-    const trip = await api("/api/trips", {
+  if (!tripType) {
+    tripTypeInput.reportValidity();
+    return;
+  }
+  if (!tripOrganizerInput.value.trim()) {
+    tripOrganizerInput.reportValidity();
+    tripOrganizerInput.focus();
+    return;
+  }
+  const trip = await api("/api/trips", {
       method: "POST",
       body: JSON.stringify({
         date: tripDateInput.value,

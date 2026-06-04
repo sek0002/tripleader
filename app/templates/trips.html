@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=51">
+    <link rel="stylesheet" href="/static/styles.css?v=54">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
@@ -46,6 +46,21 @@
 
       {% if not archive_mode %}
       <section class="panel tripCreatePanel">
+        <div class="tripCreateTitleField">
+          <label for="tripTitleInput">Trip</label>
+          <input id="tripTitleInput" type="text" value="Trip" placeholder="Trip title">
+        </div>
+        <div class="titleSuggestionWrap" aria-label="Title suggestions">
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Boat">Boat</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Shore">Shore</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Other">Other</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Phillip Island">Phillip Island</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Wilsons Prom">Wilsons Prom</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Bay">Bay</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="AOW">AOW</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="OW">OW</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Tech">Tech</button>
+        </div>
         <div class="tripCreateDateField">
           <label for="tripDateInput">Trip date</label>
           <input id="tripDateInput" type="date">
@@ -62,26 +77,11 @@
         <div class="tripCreateOrganizerField">
           <label for="tripOrganizerInput">Organizer</label>
           <div class="autocompleteWrap">
-            <input id="tripOrganizerInput" type="text" autocomplete="off" placeholder="Start typing organizer name" aria-autocomplete="list">
+            <input id="tripOrganizerInput" type="text" autocomplete="off" placeholder="Start typing organizer name" aria-autocomplete="list" required>
             <div id="tripOrganizerSuggestions" class="nameSuggestions hidden" role="listbox"></div>
           </div>
         </div>
         <button id="createTripButton" class="tripCreateButton" type="button">Create trip</button>
-        <div class="tripCreateTitleField">
-          <label for="tripTitleInput">Trip</label>
-          <input id="tripTitleInput" type="text" value="Trip" placeholder="Trip title">
-        </div>
-        <div class="titleSuggestionWrap" aria-label="Title suggestions">
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Boat">Boat</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Shore">Shore</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Other">Other</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Phillip Island">Phillip Island</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Wilsons Prom">Wilsons Prom</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Bay">Bay</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="AOW">AOW</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="OW">OW</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Tech">Tech</button>
-        </div>
       </section>
       {% endif %}
 
@@ -144,7 +144,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=51"></script>
-    <script src="/static/trips.js?v=51"></script>
+    <script src="/static/theme.js?v=54"></script>
+    <script src="/static/trips.js?v=54"></script>
   </body>
 </html>
