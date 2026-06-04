@@ -884,6 +884,23 @@ td:nth-child(3) {
   gap: 18px;
 }
 
+.tripSortPanel {
+  align-items: end;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin: -4px 0 12px;
+}
+
+.tripSortPanel label {
+  margin-bottom: 0;
+}
+
+.tripSortPanel select {
+  min-height: 36px;
+  width: 126px;
+}
+
 .tripCard {
   display: grid;
   gap: 16px;

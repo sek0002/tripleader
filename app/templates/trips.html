@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=43">
+    <link rel="stylesheet" href="/static/styles.css?v=45">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
@@ -86,6 +86,13 @@
       {% endif %}
 
       <section id="tripEmptyState" class="empty">{{ "No archived trips yet." if archive_mode else "No planned trips yet." }}</section>
+      <section class="tripSortPanel" aria-label="Trip sorting">
+        <label for="tripSortSelect">Sort</label>
+        <select id="tripSortSelect">
+          <option value="asc">Date ↑</option>
+          <option value="desc">Date ↓</option>
+        </select>
+      </section>
       <section id="tripCards" class="tripCards"></section>
     </main>
 
@@ -140,7 +147,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=43"></script>
-    <script src="/static/trips.js?v=43"></script>
+    <script src="/static/theme.js?v=45"></script>
+    <script src="/static/trips.js?v=45"></script>
   </body>
 </html>

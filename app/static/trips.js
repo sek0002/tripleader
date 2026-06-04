@@ -7,6 +7,7 @@ const createTripButton = document.querySelector("#createTripButton");
 const tripCards = document.querySelector("#tripCards");
 const tripEmptyState = document.querySelector("#tripEmptyState");
 const tripCardTemplate = document.querySelector("#tripCardTemplate");
+const tripSortSelect = document.querySelector("#tripSortSelect");
 const menuButton = document.querySelector("#menuButton");
 const pageMenu = document.querySelector("#pageMenu");
 const refreshButton = document.querySelector("#refreshButton");
@@ -14,6 +15,7 @@ const isArchivePage = document.body.dataset.tripArchive === "true";
 
 let availableNames = [];
 let trips = [];
+let tripSortDirection = "asc";
 let countdownTimer = null;
 const TRANSACTION_CATEGORIES = [
   { name: "Hire", needles: ["hire"] },
@@ -46,7 +48,7 @@ function statusMarkup(isCurrent, label, type = "membership") {
         : '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M9 4.8h6v2.1h1.4v2H15v10.3c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2V8.9H7.6v-2H9V4.8Zm1.8 0v2.1h2.4V4.8h-2.4Zm-.1 4.1v10.3c0 .2.1.3.3.3h2c.2 0 .3-.1.3-.3V8.9h-2.6Zm6.9 1.1h1.8v5.6h-1.8V10Z" fill="currentColor"></path></svg>';
   const caption = type === "boat" && !isCurrent ? "overdue" : type === "membership" ? "Member" : type === "liability" ? "Liability" : type === "hire" ? "Gear" : "";
   const captionText = caption ? `<small class="statusBadgeCaption">${caption}</small>` : "";
-  const title = `${label} ${isCurrent ? "current" : "not current"}`;
+  const title = label;
   const safeTitle = escapeAttribute(title);
   return `<span class="statusBadgeWrap" title="${safeTitle}" data-tooltip="${safeTitle}" aria-label="${safeTitle}" tabindex="0"><span class="statusBadge statusBadge--${type}" aria-hidden="true">${visible}</span>${captionText}</span>`;
 }
@@ -152,6 +154,18 @@ async function loadTrips() {
   renderTrips();
 }
 
+function tripDateSortValue(trip) {
+  const timestamp = Date.parse(trip.date || "");
+  return Number.isFinite(timestamp) ? timestamp : Number.MAX_SAFE_INTEGER;
+}
+
+function sortedTrips() {
+  return [...trips].sort((left, right) => {
+    const comparison = tripDateSortValue(left) - tripDateSortValue(right);
+    return tripSortDirection === "asc" ? comparison : -comparison;
+  });
+}
+
 async function refreshStore() {
   refreshButton.disabled = true;
   refreshButton.textContent = "Refreshing";
@@ -212,7 +226,7 @@ function renderTrips() {
   tripCards.replaceChildren();
   tripEmptyState.classList.toggle("hidden", trips.length > 0);
 
-  trips.forEach((trip) => renderTripCard(trip));
+  sortedTrips().forEach((trip) => renderTripCard(trip));
   updateCountdowns();
   countdownTimer = setInterval(updateCountdowns, 60000);
 }
@@ -285,7 +299,7 @@ function renderTripCard(trip) {
     countdown.dataset.tripDate = trip.date || "";
     updateCountdowns();
     await saveTrip(trip);
-    await renderTripMembers(card, trip);
+    renderTrips();
   });
 
   card.querySelectorAll("[data-title-suggestion]").forEach((button) => {
@@ -638,6 +652,10 @@ pageMenu.addEventListener("click", (event) => {
 });
 
 refreshButton.addEventListener("click", refreshStore);
+tripSortSelect.addEventListener("change", () => {
+  tripSortDirection = tripSortSelect.value === "desc" ? "desc" : "asc";
+  renderTrips();
+});
 
 async function initTrips() {
   await loadNames();

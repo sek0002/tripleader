@@ -1,9 +1,9 @@
-const CACHE_NAME = "muuc-tripleader-cache-v43";
+const CACHE_NAME = "muuc-tripleader-cache-v45";
 const APP_SHELL = [
-  "/static/styles.css?v=43",
-  "/static/app.js?v=43",
-  "/static/trips.js?v=43",
-  "/static/theme.js?v=43",
+  "/static/styles.css?v=45",
+  "/static/app.js?v=45",
+  "/static/trips.js?v=45",
+  "/static/theme.js?v=45",
   "/static/manifest.webmanifest",
   "/static/icons/muuc-logo-backdrop.png",
 ];
