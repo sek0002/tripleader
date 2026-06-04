@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=11">
+    <link rel="stylesheet" href="/static/styles.css?v=15">
   </head>
   <body>
     <main class="shell">
@@ -25,7 +25,16 @@
         </div>
         <div class="topActions">
           <a class="buttonLink secondaryButton" href="/">Home</a>
-          <button class="themeToggle secondaryButton" type="button" data-theme-toggle aria-label="Switch to dark mode">Dark</button>
+          <div class="menuWrap">
+            <button id="menuButton" class="menuButton secondaryButton" type="button" aria-expanded="false" aria-controls="pageMenu">Menu</button>
+            <div id="pageMenu" class="pageMenu hidden">
+              <a class="menuItem" href="/">Home</a>
+              <button class="themeToggle menuItem" type="button" data-theme-toggle aria-label="Switch to dark mode">Dark</button>
+              <form method="post" action="/logout">
+                <button class="menuItem" type="submit">Logout</button>
+              </form>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -47,9 +56,17 @@
           <label for="tripTitleInput">Title</label>
           <input id="tripTitleInput" type="text" value="Trip" placeholder="Trip title">
         </div>
+        <div>
+          <label for="tripOrganizerInput">Organizer</label>
+          <div class="autocompleteWrap">
+            <input id="tripOrganizerInput" type="text" autocomplete="off" placeholder="Start typing organizer name" aria-autocomplete="list">
+            <div id="tripOrganizerSuggestions" class="nameSuggestions hidden" role="listbox"></div>
+          </div>
+        </div>
         <div class="titleSuggestionWrap" aria-label="Title suggestions">
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Boat">Boat</button>
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Shore">Shore</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Other">Other</button>
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Phillip Island">Phillip Island</button>
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Wilsons Prom">Wilsons Prom</button>
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Bay">Bay</button>
@@ -78,9 +95,20 @@
               </select>
               <strong class="tripCountdown"></strong>
             </div>
+            <div class="tripOrganizerEditWrap">
+              <label>Organizer</label>
+              <div class="autocompleteWrap">
+                <input class="tripOrganizerEdit" type="text" autocomplete="off" placeholder="Start typing organizer name" aria-autocomplete="list">
+                <div class="nameSuggestions hidden" role="listbox"></div>
+              </div>
+            </div>
           </div>
           <div class="pinWrap">
-            <button class="pinButton secondaryButton" type="button" aria-expanded="false" title="Trip options">Pin</button>
+            <button class="pinButton secondaryButton" type="button" aria-expanded="false" title="Trip options" aria-label="Trip options">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M14.5 3.8 20.2 9.5 17.9 11.8 15.5 11.3 12.7 14.1 13.2 17.8 11.8 19.2 8.5 15.5 4.2 19.8 3 18.6 7.3 14.3 3.6 11 5 9.6 8.7 10.1 11.5 7.3 11 5.1 14.5 3.8Z" fill="currentColor"></path>
+              </svg>
+            </button>
             <div class="pinMenu hidden">
               <button class="deleteTripButton menuItem" type="button">Delete entry</button>
             </div>
@@ -90,6 +118,7 @@
         <div class="titleSuggestionWrap tripSuggestionWrap">
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Boat">Boat</button>
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Shore">Shore</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Other">Other</button>
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Phillip Island">Phillip Island</button>
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Wilsons Prom">Wilsons Prom</button>
           <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Bay">Bay</button>
@@ -114,7 +143,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=11"></script>
-    <script src="/static/trips.js?v=11"></script>
+    <script src="/static/theme.js?v=15"></script>
+    <script src="/static/trips.js?v=15"></script>
   </body>
 </html>

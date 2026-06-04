@@ -894,7 +894,10 @@ def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = No
     members = payload.get("members", [])
     if not isinstance(members, list):
         members = []
+    organizer = normalize_member_name(payload.get("organizer"))
     cleaned_members = []
+    if organizer:
+        cleaned_members.append(organizer)
     for member in members:
         member_name = normalize_member_name(member)
         if member_name and member_name not in cleaned_members:
@@ -908,14 +911,14 @@ def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = No
             trip_type = "Shore"
         else:
             trip_type = "Other"
-    title = clean_scalar(payload.get("title")) or "Trip"
-    if trip_type.casefold() not in title.casefold():
-        title = f"{trip_type} {title}".strip()
+    title = re.sub(r"^\s*(?:boat|shore|other)\b[\s:.-]*", "", clean_scalar(payload.get("title")), flags=re.I).strip()
+    title = f"{trip_type} {title or 'Trip'}".strip()
     return {
         "id": trip_id,
         "date": clean_scalar(payload.get("date")),
         "title": title,
         "trip_type": trip_type,
+        "organizer": organizer,
         "members": cleaned_members,
         "created_at": clean_scalar(payload.get("created_at")) or datetime.now(timezone.utc).isoformat(),
     }
