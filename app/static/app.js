@@ -92,8 +92,11 @@ function statusMarkup(isCurrent, label, type = "membership") {
   const badgeText = type === "liability" ? "LW" : type === "hire" ? "GH" : "M";
   const visible = type === "boat"
     ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 13.2 6.4 7.8h6.9l4.2 5.4H20l-1.7 4.1c-.8.4-1.6.6-2.4.6-1 0-1.8-.3-2.6-.8-.8.5-1.6.8-2.6.8s-1.8-.3-2.6-.8c-.8.5-1.6.8-2.6.8-.7 0-1.4-.2-2.1-.5L2 13.2h2Zm3.7-1.4h7.4l-2.4-3.1H9.1l-1.4 3.1Z" fill="currentColor"></path></svg>'
-    : badgeText;
-  return `<span class="statusBadge statusBadge--${type}" title="${label}" aria-label="${label} ${isCurrent ? "current" : "not current"}">${visible}</span>`;
+    : type === "membership"
+      ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M5 6.2c0-1 .8-1.8 1.8-1.8h10.4c1 0 1.8.8 1.8 1.8v11.6c0 1-.8 1.8-1.8 1.8H6.8c-1 0-1.8-.8-1.8-1.8V6.2Zm3.2 3.1h7.6V7.8H8.2v1.5Zm0 3.2h7.6V11H8.2v1.5Zm0 3.2h4.9v-1.5H8.2v1.5Z" fill="currentColor"></path></svg>'
+      : badgeText;
+  const overdueText = type === "boat" && !isCurrent ? '<small class="statusBadgeCaption">overdue</small>' : "";
+  return `<span class="statusBadgeWrap"><span class="statusBadge statusBadge--${type}" title="${label}" aria-label="${label} ${isCurrent ? "current" : "not current"}">${visible}</span>${overdueText}</span>`;
 }
 
 function setStatus(payload) {
