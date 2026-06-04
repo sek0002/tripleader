@@ -866,21 +866,28 @@ def _boat_payment_status(name: str, trip_date_value: Any, boat_selected: bool) -
     if matches.empty:
         return None
 
+    trip_day = _trip_date(trip_date_value)
+    if trip_day is None:
+        return None
+
+    payment_window_start = trip_day - timedelta(days=7)
     now = datetime.now(timezone.utc)
-    week_ago = now.date() - timedelta(days=7)
     for _, row in matches.iterrows():
         paid = clean_scalar(row.get("paid")).casefold() == "yes"
         item_text = clean_scalar(row.get("items")).casefold()
         paid_date = _trip_date(row.get("date"))
-        if paid and paid_date and paid_date >= week_ago and "boat" in item_text:
+        if (
+            paid
+            and paid_date
+            and payment_window_start <= paid_date <= trip_day
+            and "boat" in item_text
+        ):
             return {"is_current": True, "label": "Boat Fee Paid"}
 
-    trip_day = _trip_date(trip_date_value)
-    if trip_day is not None:
-        trip_datetime = datetime.combine(trip_day, datetime.min.time(), tzinfo=timezone.utc)
-        hours_until_trip = (trip_datetime - now).total_seconds() / 3600
-        if 0 <= hours_until_trip <= 72:
-            return {"is_current": False, "label": "Boat Fee Overdue"}
+    trip_datetime = datetime.combine(trip_day, datetime.min.time(), tzinfo=timezone.utc)
+    hours_until_trip = (trip_datetime - now).total_seconds() / 3600
+    if 0 <= hours_until_trip <= 72:
+        return {"is_current": False, "label": "Boat Fee Overdue"}
 
     return None
 
