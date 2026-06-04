@@ -28,6 +28,14 @@ function text(value) {
   return value && String(value).trim() ? String(value).trim() : "Not supplied";
 }
 
+function escapeAttribute(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function statusMarkup(isCurrent, label, type = "membership") {
   const visible = type === "boat"
     ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 13.2 6.4 7.8h6.9l4.2 5.4H20l-1.7 4.1c-.8.4-1.6.6-2.4.6-1 0-1.8-.3-2.6-.8-.8.5-1.6.8-2.6.8s-1.8-.3-2.6-.8c-.8.5-1.6.8-2.6.8-.7 0-1.4-.2-2.1-.5L2 13.2h2Zm3.7-1.4h7.4l-2.4-3.1H9.1l-1.4 3.1Z" fill="currentColor"></path></svg>'
@@ -39,7 +47,8 @@ function statusMarkup(isCurrent, label, type = "membership") {
   const caption = type === "boat" && !isCurrent ? "overdue" : type === "membership" ? "Member" : type === "liability" ? "Liability" : type === "hire" ? "Gear" : "";
   const captionText = caption ? `<small class="statusBadgeCaption">${caption}</small>` : "";
   const title = `${label} ${isCurrent ? "current" : "not current"}`;
-  return `<span class="statusBadgeWrap" title="${title}" aria-label="${title}"><span class="statusBadge statusBadge--${type}" aria-hidden="true">${visible}</span>${captionText}</span>`;
+  const safeTitle = escapeAttribute(title);
+  return `<span class="statusBadgeWrap" title="${safeTitle}" data-tooltip="${safeTitle}" aria-label="${safeTitle}" tabindex="0"><span class="statusBadge statusBadge--${type}" aria-hidden="true">${visible}</span>${captionText}</span>`;
 }
 
 function appendTitleSuggestion(input, suggestion) {

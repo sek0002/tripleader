@@ -370,6 +370,39 @@ button:disabled {
   flex-direction: column;
   gap: 1px;
   line-height: 1;
+  position: relative;
+}
+
+.statusBadgeWrap::after {
+  background: var(--ink);
+  border-radius: 6px;
+  bottom: calc(100% + 8px);
+  box-shadow: 0 12px 30px rgba(10, 20, 28, 0.22);
+  color: var(--panel);
+  content: attr(data-tooltip);
+  font-size: 12px;
+  font-weight: 800;
+  left: 50%;
+  line-height: 1.25;
+  max-width: 220px;
+  opacity: 0;
+  padding: 7px 9px;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  transform: translate(-50%, 4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  visibility: hidden;
+  white-space: normal;
+  width: max-content;
+  z-index: 60;
+}
+
+.statusBadgeWrap:hover::after,
+.statusBadgeWrap:focus::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
 }
 
 .statusBadgeCaption {
@@ -1030,6 +1063,7 @@ td:nth-child(3) {
   display: grid;
   gap: 8px;
   grid-template-columns: minmax(0, 1fr) auto;
+  overflow: visible;
   padding: 12px;
 }
 
