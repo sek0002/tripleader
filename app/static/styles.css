@@ -126,7 +126,23 @@ button {
   padding: 0 18px;
 }
 
+.buttonLink {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 6px;
+  color: white;
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 42px;
+  padding: 0 18px;
+  text-decoration: none;
+}
+
 button:hover {
+  background: var(--accent-dark);
+}
+
+.buttonLink:hover {
   background: var(--accent-dark);
 }
 
@@ -140,7 +156,16 @@ button:disabled {
   color: var(--ink);
 }
 
+.buttonLink.secondaryButton {
+  background: var(--secondary);
+  color: var(--ink);
+}
+
 .secondaryButton:hover {
+  background: var(--secondary-hover);
+}
+
+.buttonLink.secondaryButton:hover {
   background: var(--secondary-hover);
 }
 
@@ -679,4 +704,167 @@ td:nth-child(3) {
   color: var(--red);
   font-weight: 700;
   margin-top: 10px;
+}
+
+.tripCreatePanel {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(160px, 220px) minmax(140px, 180px) minmax(220px, 1fr) minmax(220px, 1.5fr) auto;
+  margin-bottom: 18px;
+}
+
+.titleSuggestionWrap {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.titleSuggestion {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.tripCards {
+  display: grid;
+  gap: 18px;
+}
+
+.tripCard {
+  display: grid;
+  gap: 16px;
+}
+
+.tripCardHeader {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.tripTitleEdit {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.tripMetaLine {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tripDateEdit {
+  max-width: 210px;
+}
+
+.tripTypeEdit {
+  max-width: 170px;
+}
+
+.tripCountdown {
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.pinWrap {
+  position: relative;
+}
+
+.pinButton {
+  min-width: 76px;
+}
+
+.pinMenu {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 45px rgba(10, 20, 28, 0.16);
+  min-width: 160px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+}
+
+.tripSuggestionWrap {
+  margin-top: -6px;
+}
+
+.tripMemberLookup {
+  margin-bottom: 0;
+  padding: 16px;
+}
+
+.tripMembers {
+  display: grid;
+  gap: 10px;
+}
+
+.tripMemberRow {
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) auto;
+  padding: 12px;
+}
+
+.tripMemberStatuses {
+  margin: 0;
+}
+
+.removeTripMemberButton {
+  min-height: 34px;
+}
+
+.tripTransactions {
+  display: grid;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.tripTransactions table {
+  min-width: 760px;
+}
+
+.tripTransactions th,
+.tripTransactions td {
+  width: auto;
+}
+
+@media (max-width: 820px) {
+  .tripCreatePanel,
+  .tripCardHeader,
+  .tripMemberRow {
+    grid-template-columns: 1fr;
+  }
+
+  .pinWrap {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 560px) {
+  .topActions {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tripMetaLine {
+    display: grid;
+  }
+
+  .tripDateEdit {
+    max-width: none;
+  }
+
+  .tripTypeEdit {
+    max-width: none;
+  }
 }

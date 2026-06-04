@@ -7,7 +7,7 @@ import re
 import threading
 import time
 from contextlib import asynccontextmanager
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -27,6 +27,7 @@ DATA_DIR = BASE_DIR / "data"
 STORE_PATH = BASE_DIR / "purchases.csv"
 LEGACY_PURCHASES_PATH = DATA_DIR / "purchases.csv"
 SYNC_STATE_PATH = BASE_DIR / "purchases.sync.json"
+TRIPS_PATH = BASE_DIR / "trips.json"
 TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json"
 TEAMAPP_PAGE_PARAM = "page"
 TEAMAPP_PAGE_RANGE = range(1, 7)
@@ -716,14 +717,14 @@ def names_from_store() -> list[str]:
     return names
 
 
-def member_summary(name: str) -> dict[str, Any]:
+def _member_matches(name: str) -> pd.DataFrame:
     df = load_store()
     name_key = name_canonical_key(name)
     matches = df[df["name_key"] == name_key].copy()
     if matches.empty:
         matches = df[df["name"].map(name_canonical_key) == name_key].copy()
     if matches.empty:
-        return {"found": False, "name": name, "emergency": {}, "categories": {}}
+        return matches
 
     base_email = clean_scalar(matches.iloc[0].get("email"))
     if base_email:
@@ -731,6 +732,15 @@ def member_summary(name: str) -> dict[str, Any]:
         matched_by_email = df[df["email"].str.casefold() == email_key].copy()
         if not matched_by_email.empty:
             matches = matched_by_email
+    return matches
+
+
+def member_summary(name: str) -> dict[str, Any]:
+    matches = _member_matches(name)
+    if matches.empty:
+        return {"found": False, "name": name, "emergency": {}, "categories": {}}
+
+    base_email = clean_scalar(matches.iloc[0].get("email"))
 
     payment_year = datetime.now(timezone.utc).year
     payment_year_matches = matches[matches["date"].map(row_year).eq(payment_year)].copy()
@@ -806,6 +816,111 @@ def member_summary(name: str) -> dict[str, Any]:
     }
 
 
+def _trip_date(value: Any) -> Optional[date]:
+    parsed = pd.to_datetime(value, errors="coerce")
+    if pd.isna(parsed):
+        return None
+    return parsed.date()
+
+
+def _trip_member_transactions(name: str) -> list[dict[str, str]]:
+    matches = _member_matches(name)
+    if matches.empty:
+        return []
+    rows: list[dict[str, str]] = []
+    for _, row in matches.sort_values("date", ascending=False).iterrows():
+        rows.append(
+            {
+                "name": clean_scalar(row.get("name")),
+                "date": clean_scalar(row.get("date")),
+                "paid": clean_scalar(row.get("paid")),
+                "total": clean_scalar(row.get("total")),
+                "items": clean_scalar(row.get("items")),
+            }
+        )
+    return rows
+
+
+def _boat_payment_status(name: str, trip_date_value: Any, boat_selected: bool) -> Optional[dict[str, Union[str, bool]]]:
+    if not boat_selected:
+        return None
+
+    matches = _member_matches(name)
+    if matches.empty:
+        return None
+
+    now = datetime.now(timezone.utc)
+    week_ago = now.date() - timedelta(days=7)
+    for _, row in matches.iterrows():
+        paid = clean_scalar(row.get("paid")).casefold() == "yes"
+        item_text = clean_scalar(row.get("items")).casefold()
+        paid_date = _trip_date(row.get("date"))
+        if paid and paid_date and paid_date >= week_ago and "boat" in item_text:
+            return {"is_current": True, "label": "Boat Paid"}
+
+    trip_day = _trip_date(trip_date_value)
+    if trip_day is not None:
+        trip_datetime = datetime.combine(trip_day, datetime.min.time(), tzinfo=timezone.utc)
+        hours_until_trip = (trip_datetime - now).total_seconds() / 3600
+        if 0 <= hours_until_trip <= 72:
+            return {"is_current": False, "label": "Payment Overdue"}
+
+    return None
+
+
+def trip_member_summary(name: str, trip_date_value: Any, boat_selected: bool) -> dict[str, Any]:
+    summary = member_summary(name)
+    summary["boat_payment_status"] = _boat_payment_status(name, trip_date_value, boat_selected)
+    summary["transactions"] = _trip_member_transactions(name)
+    return summary
+
+
+def _load_trips() -> list[dict[str, Any]]:
+    if not TRIPS_PATH.exists():
+        return []
+    try:
+        payload = json.loads(TRIPS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    return payload if isinstance(payload, list) else []
+
+
+def _save_trips(trips: list[dict[str, Any]]) -> None:
+    TRIPS_PATH.write_text(json.dumps(trips, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = None) -> dict[str, Any]:
+    trip_id = existing_id or clean_scalar(payload.get("id")) or f"trip-{int(time.time() * 1000)}"
+    members = payload.get("members", [])
+    if not isinstance(members, list):
+        members = []
+    cleaned_members = []
+    for member in members:
+        member_name = normalize_member_name(member)
+        if member_name and member_name not in cleaned_members:
+            cleaned_members.append(member_name)
+    trip_type = clean_scalar(payload.get("trip_type")).title()
+    if trip_type not in {"Boat", "Shore", "Other"}:
+        title_text = clean_scalar(payload.get("title")).casefold()
+        if "boat" in title_text:
+            trip_type = "Boat"
+        elif "shore" in title_text:
+            trip_type = "Shore"
+        else:
+            trip_type = "Other"
+    title = clean_scalar(payload.get("title")) or "Trip"
+    if trip_type.casefold() not in title.casefold():
+        title = f"{trip_type} {title}".strip()
+    return {
+        "id": trip_id,
+        "date": clean_scalar(payload.get("date")),
+        "title": title,
+        "trip_type": trip_type,
+        "members": cleaned_members,
+        "created_at": clean_scalar(payload.get("created_at")) or datetime.now(timezone.utc).isoformat(),
+    }
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     del app
@@ -837,6 +952,14 @@ def index(request: Request):
             "last_checked_color": freshness_color(current.get("at")),
         },
     )
+
+
+@app.get("/trips", response_class=HTMLResponse)
+def trips_page(request: Request):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    return templates.TemplateResponse(request, "trips.html")
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -898,6 +1021,64 @@ def names(request: Request):
     if redirect:
         return redirect
     return {"names": names_from_store()}
+
+
+@app.get("/api/trips")
+def trips(request: Request):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    return {"trips": _load_trips()}
+
+
+@app.post("/api/trips")
+async def create_trip(request: Request):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    payload = await request.json()
+    trips = _load_trips()
+    trip = _clean_trip_payload(payload if isinstance(payload, dict) else {})
+    trips.insert(0, trip)
+    _save_trips(trips)
+    return trip
+
+
+@app.put("/api/trips/{trip_id}")
+async def update_trip(request: Request, trip_id: str):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    payload = await request.json()
+    trips = _load_trips()
+    for index, trip in enumerate(trips):
+        if clean_scalar(trip.get("id")) == trip_id:
+            merged = dict(trip)
+            if isinstance(payload, dict):
+                merged.update(payload)
+            trips[index] = _clean_trip_payload(merged, existing_id=trip_id)
+            _save_trips(trips)
+            return trips[index]
+    return {"error": "Trip not found"}
+
+
+@app.delete("/api/trips/{trip_id}")
+def delete_trip(request: Request, trip_id: str):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    trips = _load_trips()
+    remaining = [trip for trip in trips if clean_scalar(trip.get("id")) != trip_id]
+    _save_trips(remaining)
+    return {"ok": True}
+
+
+@app.get("/api/trip-member/{name}")
+def trip_member(request: Request, name: str, trip_date: str = "", boat: bool = False):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    return trip_member_summary(name, trip_date, boat)
 
 
 @app.get("/api/member/{name}")

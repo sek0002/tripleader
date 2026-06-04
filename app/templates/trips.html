@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f6d7a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MUUC Trips">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/static/manifest.webmanifest">
+    <link rel="icon" type="image/png" href="/static/icons/muuc-logo-backdrop.png">
+    <link rel="apple-touch-icon" href="/static/icons/muuc-logo-backdrop.png">
+    <title>Plan Trips - MUUC</title>
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
+    </script>
+    <link rel="stylesheet" href="/static/styles.css?v=11">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="toolbar">
+        <div class="toolbarStatus">
+          <h1>Plan Trips</h1>
+          <p id="syncStatus">Create and track planned dive cards.</p>
+        </div>
+        <div class="topActions">
+          <a class="buttonLink secondaryButton" href="/">Home</a>
+          <button class="themeToggle secondaryButton" type="button" data-theme-toggle aria-label="Switch to dark mode">Dark</button>
+        </div>
+      </section>
+
+      <section class="panel tripCreatePanel">
+        <div>
+          <label for="tripDateInput">Trip date</label>
+          <input id="tripDateInput" type="date">
+        </div>
+        <div>
+          <label for="tripTypeInput">Trip type</label>
+          <select id="tripTypeInput" required>
+            <option value="">Select type</option>
+            <option value="Boat">Boat</option>
+            <option value="Shore">Shore</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="tripTitleInput">Title</label>
+          <input id="tripTitleInput" type="text" value="Trip" placeholder="Trip title">
+        </div>
+        <div class="titleSuggestionWrap" aria-label="Title suggestions">
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Boat">Boat</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Shore">Shore</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Phillip Island">Phillip Island</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Wilsons Prom">Wilsons Prom</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Bay">Bay</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="AOW">AOW</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="OW">OW</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Tech">Tech</button>
+        </div>
+        <button id="createTripButton" type="button">Create trip</button>
+      </section>
+
+      <section id="tripEmptyState" class="empty">No planned trips yet.</section>
+      <section id="tripCards" class="tripCards"></section>
+    </main>
+
+    <template id="tripCardTemplate">
+      <article class="panel tripCard">
+        <div class="tripCardHeader">
+          <div>
+            <input class="tripTitleEdit" type="text" aria-label="Trip title">
+            <div class="tripMetaLine">
+              <input class="tripDateEdit" type="date" aria-label="Trip date">
+              <select class="tripTypeEdit" aria-label="Trip type" required>
+                <option value="Boat">Boat</option>
+                <option value="Shore">Shore</option>
+                <option value="Other">Other</option>
+              </select>
+              <strong class="tripCountdown"></strong>
+            </div>
+          </div>
+          <div class="pinWrap">
+            <button class="pinButton secondaryButton" type="button" aria-expanded="false" title="Trip options">Pin</button>
+            <div class="pinMenu hidden">
+              <button class="deleteTripButton menuItem" type="button">Delete entry</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="titleSuggestionWrap tripSuggestionWrap">
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Boat">Boat</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Shore">Shore</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Phillip Island">Phillip Island</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Wilsons Prom">Wilsons Prom</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Bay">Bay</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="AOW">AOW</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="OW">OW</button>
+          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Tech">Tech</button>
+        </div>
+
+        <div class="lookup tripMemberLookup">
+          <label>Members</label>
+          <div class="searchRow">
+            <div class="autocompleteWrap">
+              <input class="tripMemberInput" type="text" autocomplete="off" placeholder="Start typing a member name" aria-autocomplete="list">
+              <div class="nameSuggestions hidden" role="listbox"></div>
+            </div>
+            <button class="addTripMemberButton" type="button">Add</button>
+          </div>
+        </div>
+
+        <div class="tripMembers"></div>
+        <section class="tripTransactions"></section>
+      </article>
+    </template>
+
+    <script src="/static/theme.js?v=11"></script>
+    <script src="/static/trips.js?v=11"></script>
+  </body>
+</html>
