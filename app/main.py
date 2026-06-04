@@ -889,6 +889,15 @@ def _save_trips(trips: list[dict[str, Any]]) -> None:
     TRIPS_PATH.write_text(json.dumps(trips, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _trip_is_archived(trip: dict[str, Any]) -> bool:
+    trip_day = _trip_date(trip.get("date"))
+    return trip_day is not None and trip_day < date.today()
+
+
+def _trips_for_archive(archived: bool) -> list[dict[str, Any]]:
+    return [trip for trip in _load_trips() if _trip_is_archived(trip) == archived]
+
+
 def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = None) -> dict[str, Any]:
     trip_id = existing_id or clean_scalar(payload.get("id")) or f"trip-{int(time.time() * 1000)}"
     members = payload.get("members", [])
@@ -912,7 +921,8 @@ def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = No
         else:
             trip_type = "Other"
     title = re.sub(r"^\s*(?:boat|shore|other)\b[\s:.-]*", "", clean_scalar(payload.get("title")), flags=re.I).strip()
-    title = f"{trip_type} {title or 'Trip'}".strip()
+    title = "" if title.casefold() == "trip" else title
+    title = f"{trip_type} {title}".strip()
     return {
         "id": trip_id,
         "date": clean_scalar(payload.get("date")),
@@ -962,7 +972,15 @@ def trips_page(request: Request):
     redirect = require_login(request)
     if redirect:
         return redirect
-    return templates.TemplateResponse(request, "trips.html")
+    return templates.TemplateResponse(request, "trips.html", {"archive_mode": False})
+
+
+@app.get("/trips/archive", response_class=HTMLResponse)
+def archived_trips_page(request: Request):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    return templates.TemplateResponse(request, "trips.html", {"archive_mode": True})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -1027,11 +1045,11 @@ def names(request: Request):
 
 
 @app.get("/api/trips")
-def trips(request: Request):
+def trips(request: Request, archived: bool = False):
     redirect = require_login(request)
     if redirect:
         return redirect
-    return {"trips": _load_trips()}
+    return {"trips": _trips_for_archive(archived)}
 
 
 @app.post("/api/trips")

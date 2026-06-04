@@ -34,6 +34,19 @@
   --red-bg: #471f1c;
 }
 
+:root[data-theme="dark"] .tripCreatePanel {
+  background: #163a36;
+  border-color: #2b8d80;
+}
+
+:root[data-theme="dark"] .homeButton {
+  background: #246b3f;
+}
+
+:root[data-theme="dark"] .homeButton:hover {
+  background: #1d5734;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -167,6 +180,15 @@ button:disabled {
 
 .buttonLink.secondaryButton:hover {
   background: var(--secondary-hover);
+}
+
+.homeButton {
+  background: var(--green);
+  color: white;
+}
+
+.homeButton:hover {
+  background: #0f6330;
 }
 
 .themeToggle {
@@ -713,8 +735,8 @@ td:nth-child(3) {
 
 .tripCreatePanel {
   align-items: end;
-  background: linear-gradient(135deg, rgba(15, 109, 122, 0.14), rgba(201, 151, 35, 0.12)), var(--panel);
-  border-color: rgba(15, 109, 122, 0.35);
+  background: #e1f4f1;
+  border-color: #7fc8bf;
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(150px, 190px) minmax(130px, 170px) minmax(190px, 1fr) minmax(190px, 1fr) minmax(220px, 1.3fr) auto;
@@ -739,10 +761,9 @@ td:nth-child(3) {
 }
 
 .tripCard {
-  background: linear-gradient(135deg, rgba(15, 109, 122, 0.12), rgba(201, 151, 35, 0.10)), var(--panel);
-  border-color: rgba(15, 109, 122, 0.35);
   display: grid;
   gap: 16px;
+  overflow: visible;
 }
 
 .tripCardHeader {
@@ -753,21 +774,41 @@ td:nth-child(3) {
 }
 
 .tripTitleEdit {
+  background: transparent;
+  border-color: transparent;
   font-size: 22px;
   font-weight: 800;
   margin-bottom: 10px;
+  padding-left: 0;
+}
+
+.tripTitleEdit:focus {
+  background: var(--field);
+  border-color: var(--accent);
+  padding-left: 12px;
 }
 
 .tripMetaLine {
-  align-items: center;
+  align-items: end;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
 .tripOrganizerEditWrap {
-  margin-top: 12px;
-  max-width: 420px;
+  margin-top: 0;
+  max-width: 260px;
+  min-width: 210px;
+}
+
+.tripCard .tripOrganizerEdit {
+  background: transparent;
+  border-color: transparent;
+}
+
+.tripCard .tripOrganizerEdit:focus {
+  background: var(--field);
+  border-color: var(--accent);
 }
 
 .tripDateEdit {
@@ -781,6 +822,7 @@ td:nth-child(3) {
 .tripCountdown {
   color: var(--accent);
   font-size: 15px;
+  transition: color 240ms ease;
 }
 
 .pinWrap {
@@ -821,6 +863,7 @@ td:nth-child(3) {
 
 .tripMemberLookup {
   margin-bottom: 0;
+  overflow: visible;
   padding: 16px;
 }
 
@@ -944,5 +987,10 @@ td:nth-child(3) {
 
   .tripTypeEdit {
     max-width: none;
+  }
+
+  .tripOrganizerEditWrap {
+    max-width: none;
+    min-width: 0;
   }
 }

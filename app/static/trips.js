@@ -9,6 +9,8 @@ const tripEmptyState = document.querySelector("#tripEmptyState");
 const tripCardTemplate = document.querySelector("#tripCardTemplate");
 const menuButton = document.querySelector("#menuButton");
 const pageMenu = document.querySelector("#pageMenu");
+const refreshButton = document.querySelector("#refreshButton");
+const isArchivePage = document.body.dataset.tripArchive === "true";
 
 let availableNames = [];
 let trips = [];
@@ -34,8 +36,27 @@ function statusMarkup(isCurrent, label) {
 }
 
 function appendTitleSuggestion(input, suggestion) {
+  if (["OW", "AOW", "Tech"].includes(suggestion)) {
+    appendCourseSuggestion(input, suggestion);
+    return;
+  }
   const current = input.value.trim();
   input.value = current ? `${current} ${suggestion}` : suggestion;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function appendCourseSuggestion(input, suggestion) {
+  const current = input.value.trim();
+  const coursePattern = /\b(?:OW|AOW|Tech)(?:\/(?:OW|AOW|Tech))*\b/i;
+  const match = current.match(coursePattern);
+  if (match) {
+    const selected = match[0].split("/").map((value) => value.toLowerCase());
+    if (!selected.includes(suggestion.toLowerCase())) {
+      input.value = current.replace(coursePattern, `${match[0]}/${suggestion}`);
+    }
+  } else {
+    input.value = current ? `${current} ${suggestion}` : suggestion;
+  }
   input.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
@@ -48,7 +69,8 @@ function ensureTitleHasType(title, tripType) {
   const cleanedTitle = String(title || "")
     .replace(/^\s*(boat|shore|other)\b[\s:.-]*/i, "")
     .trim();
-  return tripType ? `${tripType} ${cleanedTitle || "Trip"}` : cleanedTitle || "Trip";
+  const titleBody = cleanedTitle.toLowerCase() === "trip" ? "" : cleanedTitle;
+  return tripType ? `${tripType}${titleBody ? ` ${titleBody}` : ""}` : titleBody || "Trip";
 }
 
 function isBoatTrip(trip) {
@@ -71,6 +93,18 @@ function countdownLabel(tripDate) {
   const hours = Math.floor((diff / (60 * 60 * 1000)) % 24);
   const minutes = Math.floor((diff / (60 * 1000)) % 60);
   return `${days}d ${hours}h ${minutes}m`;
+}
+
+function countdownColor(tripDate) {
+  if (!tripDate) return "";
+  const target = new Date(`${tripDate}T00:00:00`);
+  if (Number.isNaN(target.getTime())) return "";
+  const hoursUntilTrip = (target.getTime() - Date.now()) / (60 * 60 * 1000);
+  if (hoursUntilTrip > 72) return "";
+  if (hoursUntilTrip <= 24) return "hsl(0, 72%, 48%)";
+  const progress = Math.max(0, Math.min(1, (72 - hoursUntilTrip) / 48));
+  const hue = Math.round(32 * (1 - progress));
+  return `hsl(${hue}, 78%, 50%)`;
 }
 
 async function api(path, options = {}) {
@@ -97,9 +131,22 @@ async function loadNames() {
 }
 
 async function loadTrips() {
-  const payload = await api("/api/trips");
+  const payload = await api(`/api/trips${isArchivePage ? "?archived=true" : ""}`);
   trips = payload.trips || [];
   renderTrips();
+}
+
+async function refreshStore() {
+  refreshButton.disabled = true;
+  refreshButton.textContent = "Refreshing";
+  try {
+    await api("/api/refresh", { method: "POST" });
+    await loadNames();
+    await loadTrips();
+  } finally {
+    refreshButton.disabled = false;
+    refreshButton.textContent = "Refresh";
+  }
 }
 
 function closeSuggestions(suggestions) {
@@ -157,6 +204,7 @@ function renderTrips() {
 function updateCountdowns() {
   document.querySelectorAll("[data-trip-date]").forEach((element) => {
     element.textContent = countdownLabel(element.dataset.tripDate);
+    element.style.color = countdownColor(element.dataset.tripDate);
   });
 }
 
@@ -171,7 +219,7 @@ function renderTripCard(trip) {
   const pinButton = card.querySelector(".pinButton");
   const pinMenu = card.querySelector(".pinMenu");
   const memberInput = card.querySelector(".tripMemberInput");
-  const suggestions = card.querySelector(".nameSuggestions");
+  const suggestions = card.querySelector(".tripMemberLookup .nameSuggestions");
 
   titleInput.value = trip.title || "Trip";
   dateInput.value = trip.date || "";
@@ -432,49 +480,53 @@ function transactionTable(transactions) {
   return table;
 }
 
-createTripButton.addEventListener("click", async () => {
-  const tripType = normalizeTripType(tripTypeInput.value);
-  if (!tripType) {
-    tripTypeInput.reportValidity();
-    return;
-  }
-  const trip = await api("/api/trips", {
-    method: "POST",
-    body: JSON.stringify({
-      date: tripDateInput.value,
-      title: ensureTitleHasType(tripTitleInput.value, tripType),
-      trip_type: tripType,
-      organizer: tripOrganizerInput.value.trim(),
-      members: [],
-    }),
+if (createTripButton) {
+  createTripButton.addEventListener("click", async () => {
+    const tripType = normalizeTripType(tripTypeInput.value);
+    if (!tripType) {
+      tripTypeInput.reportValidity();
+      return;
+    }
+    const trip = await api("/api/trips", {
+      method: "POST",
+      body: JSON.stringify({
+        date: tripDateInput.value,
+        title: ensureTitleHasType(tripTitleInput.value, tripType),
+        trip_type: tripType,
+        organizer: tripOrganizerInput.value.trim(),
+        members: [],
+      }),
+    });
+    trips = [trip, ...trips];
+    tripTitleInput.value = "Trip";
+    tripTypeInput.value = "";
+    tripOrganizerInput.value = "";
+    renderTrips();
   });
-  trips = [trip, ...trips];
-  tripTitleInput.value = "Trip";
-  tripTypeInput.value = "";
-  tripOrganizerInput.value = "";
-  renderTrips();
-});
+}
 
-tripOrganizerInput.addEventListener("input", () =>
-  renderSuggestions(tripOrganizerInput, tripOrganizerSuggestions, (name) => {
-    tripOrganizerInput.value = name;
-    closeSuggestions(tripOrganizerSuggestions);
-  })
-);
+if (tripOrganizerInput && tripOrganizerSuggestions) {
+  tripOrganizerInput.addEventListener("input", () =>
+    renderSuggestions(tripOrganizerInput, tripOrganizerSuggestions, (name) => {
+      tripOrganizerInput.value = name;
+      closeSuggestions(tripOrganizerSuggestions);
+    })
+  );
 
-tripOrganizerInput.addEventListener("focus", () =>
-  renderSuggestions(tripOrganizerInput, tripOrganizerSuggestions, (name) => {
-    tripOrganizerInput.value = name;
-    closeSuggestions(tripOrganizerSuggestions);
-  })
-);
+  tripOrganizerInput.addEventListener("focus", () =>
+    renderSuggestions(tripOrganizerInput, tripOrganizerSuggestions, (name) => {
+      tripOrganizerInput.value = name;
+      closeSuggestions(tripOrganizerSuggestions);
+    })
+  );
 
-tripOrganizerInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    closeSuggestions(tripOrganizerSuggestions);
-  }
-});
+  tripOrganizerInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      closeSuggestions(tripOrganizerSuggestions);
+    }
+  });
+}
 
 document.querySelectorAll("[data-title-suggestion]").forEach((button) => {
   if (button.closest("template")) return;
@@ -508,6 +560,8 @@ menuButton.addEventListener("click", (event) => {
 pageMenu.addEventListener("click", (event) => {
   if (event.target.matches("[data-theme-toggle]")) closeMenu();
 });
+
+refreshButton.addEventListener("click", refreshStore);
 
 async function initTrips() {
   await loadNames();

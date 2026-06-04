@@ -14,21 +14,29 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=15">
+    <link rel="stylesheet" href="/static/styles.css?v=19">
   </head>
-  <body>
+  <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
       <section class="toolbar">
         <div class="toolbarStatus">
-          <h1>Plan Trips</h1>
-          <p id="syncStatus">Create and track planned dive cards.</p>
+          <h1>{{ "Archived Trips" if archive_mode else "Plan Trips" }}</h1>
+          <p id="syncStatus">{{ "Past-dated dive cards are automatically archived here." if archive_mode else "Create and track planned dive cards." }}</p>
         </div>
         <div class="topActions">
-          <a class="buttonLink secondaryButton" href="/">Home</a>
+          <a class="buttonLink homeButton" href="/">Home</a>
+          {% if archive_mode %}
+          <a class="buttonLink secondaryButton" href="/trips">Plan Trips</a>
+          {% else %}
+          <a class="buttonLink secondaryButton" href="/trips/archive">Archive</a>
+          {% endif %}
+          <button id="refreshButton" type="button">Refresh</button>
           <div class="menuWrap">
             <button id="menuButton" class="menuButton secondaryButton" type="button" aria-expanded="false" aria-controls="pageMenu">Menu</button>
             <div id="pageMenu" class="pageMenu hidden">
               <a class="menuItem" href="/">Home</a>
+              <a class="menuItem" href="/trips">Plan Trips</a>
+              <a class="menuItem" href="/trips/archive">Archive</a>
               <button class="themeToggle menuItem" type="button" data-theme-toggle aria-label="Switch to dark mode">Dark</button>
               <form method="post" action="/logout">
                 <button class="menuItem" type="submit">Logout</button>
@@ -38,6 +46,7 @@
         </div>
       </section>
 
+      {% if not archive_mode %}
       <section class="panel tripCreatePanel">
         <div>
           <label for="tripDateInput">Trip date</label>
@@ -76,8 +85,9 @@
         </div>
         <button id="createTripButton" type="button">Create trip</button>
       </section>
+      {% endif %}
 
-      <section id="tripEmptyState" class="empty">No planned trips yet.</section>
+      <section id="tripEmptyState" class="empty">{{ "No archived trips yet." if archive_mode else "No planned trips yet." }}</section>
       <section id="tripCards" class="tripCards"></section>
     </main>
 
@@ -93,14 +103,14 @@
                 <option value="Shore">Shore</option>
                 <option value="Other">Other</option>
               </select>
-              <strong class="tripCountdown"></strong>
-            </div>
-            <div class="tripOrganizerEditWrap">
-              <label>Organizer</label>
-              <div class="autocompleteWrap">
-                <input class="tripOrganizerEdit" type="text" autocomplete="off" placeholder="Start typing organizer name" aria-autocomplete="list">
-                <div class="nameSuggestions hidden" role="listbox"></div>
+              <div class="tripOrganizerEditWrap">
+                <label>Organizer</label>
+                <div class="autocompleteWrap">
+                  <input class="tripOrganizerEdit" type="text" autocomplete="off" placeholder="Start typing organizer name" aria-autocomplete="list">
+                  <div class="nameSuggestions hidden" role="listbox"></div>
+                </div>
               </div>
+              <strong class="tripCountdown"></strong>
             </div>
           </div>
           <div class="pinWrap">
@@ -113,18 +123,6 @@
               <button class="deleteTripButton menuItem" type="button">Delete entry</button>
             </div>
           </div>
-        </div>
-
-        <div class="titleSuggestionWrap tripSuggestionWrap">
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Boat">Boat</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Shore">Shore</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Other">Other</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Phillip Island">Phillip Island</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Wilsons Prom">Wilsons Prom</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Bay">Bay</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="AOW">AOW</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="OW">OW</button>
-          <button class="secondaryButton titleSuggestion" type="button" data-title-suggestion="Tech">Tech</button>
         </div>
 
         <div class="lookup tripMemberLookup">
@@ -143,7 +141,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=15"></script>
-    <script src="/static/trips.js?v=15"></script>
+    <script src="/static/theme.js?v=19"></script>
+    <script src="/static/trips.js?v=19"></script>
   </body>
 </html>
