@@ -7,7 +7,7 @@ const createTripButton = document.querySelector("#createTripButton");
 const tripCards = document.querySelector("#tripCards");
 const tripEmptyState = document.querySelector("#tripEmptyState");
 const tripCardTemplate = document.querySelector("#tripCardTemplate");
-const tripSortSelect = document.querySelector("#tripSortSelect");
+const tripSortToggle = document.querySelector("#tripSortToggle");
 const menuButton = document.querySelector("#menuButton");
 const pageMenu = document.querySelector("#pageMenu");
 const refreshButton = document.querySelector("#refreshButton");
@@ -652,8 +652,12 @@ pageMenu.addEventListener("click", (event) => {
 });
 
 refreshButton.addEventListener("click", refreshStore);
-tripSortSelect.addEventListener("change", () => {
-  tripSortDirection = tripSortSelect.value === "desc" ? "desc" : "asc";
+tripSortToggle.addEventListener("click", () => {
+  tripSortDirection = tripSortDirection === "asc" ? "desc" : "asc";
+  const isAscending = tripSortDirection === "asc";
+  tripSortToggle.textContent = isAscending ? "↑" : "↓";
+  tripSortToggle.setAttribute("aria-label", `Sort by date ${isAscending ? "ascending" : "descending"}`);
+  tripSortToggle.title = `Sort by date ${isAscending ? "ascending" : "descending"}`;
   renderTrips();
 });
 

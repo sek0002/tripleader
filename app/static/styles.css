@@ -885,20 +885,33 @@ td:nth-child(3) {
 }
 
 .tripSortPanel {
-  align-items: end;
+  align-items: center;
   display: flex;
-  gap: 10px;
+  gap: 6px;
   justify-content: flex-end;
   margin: -4px 0 12px;
 }
 
-.tripSortPanel label {
-  margin-bottom: 0;
+.tripSortPanel span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
-.tripSortPanel select {
-  min-height: 36px;
-  width: 126px;
+.tripSortToggle {
+  background: transparent;
+  color: var(--accent);
+  font-size: 20px;
+  line-height: 1;
+  min-height: 28px;
+  padding: 0 6px;
+}
+
+.tripSortToggle:hover,
+.tripSortToggle:focus {
+  background: transparent;
+  color: var(--accent-dark);
 }
 
 .tripCard {
