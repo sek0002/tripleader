@@ -34,16 +34,7 @@ TEAMAPP_PAGE_RANGE = range(1, 7)
 TEAMAPP_REFRESH_PAGE_RANGE = range(1, 2)
 SYNC_INTERVAL_SECONDS = 60 * 60
 SYNC_STALE_SECONDS = 15 * 60
-TRIP_CARD_COLORS = [
-    "#ffe2b8",
-    "#d8f3dc",
-    "#cde7ff",
-    "#f8d5ff",
-    "#ffe1e1",
-    "#dff7f3",
-    "#fff3b0",
-    "#e2ddff",
-]
+TRIP_CARD_PATTERNS = ["aqua", "ember", "violet", "moss", "steel", "copper", "aurora", "midnight"]
 
 CATEGORIES = [
     ("Hire", ["hire"]),
@@ -950,9 +941,9 @@ def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = No
     title = re.sub(r"^\s*(?:boat|shore|other)\b[\s:.-]*", "", clean_scalar(payload.get("title")), flags=re.I).strip()
     title = "" if title.casefold() == "trip" else title
     title = f"{trip_type} {title}".strip()
-    color = clean_scalar(payload.get("color"))
-    if color not in TRIP_CARD_COLORS:
-        color = TRIP_CARD_COLORS[abs(hash(trip_id)) % len(TRIP_CARD_COLORS)]
+    pattern = clean_scalar(payload.get("pattern"))
+    if pattern not in TRIP_CARD_PATTERNS:
+        pattern = TRIP_CARD_PATTERNS[abs(hash(trip_id)) % len(TRIP_CARD_PATTERNS)]
     return {
         "id": trip_id,
         "date": clean_scalar(payload.get("date")),
@@ -960,7 +951,7 @@ def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = No
         "trip_type": trip_type,
         "organizer": organizer,
         "members": cleaned_members,
-        "color": color,
+        "pattern": pattern,
         "created_at": clean_scalar(payload.get("created_at")) or datetime.now(timezone.utc).isoformat(),
     }
 
