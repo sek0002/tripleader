@@ -17,6 +17,7 @@ let availableNames = [];
 let trips = [];
 let tripSortDirection = "asc";
 let countdownTimer = null;
+const TRIP_CARD_COLORS = ["#ffe2b8", "#d8f3dc", "#cde7ff", "#f8d5ff", "#ffe1e1", "#dff7f3", "#fff3b0", "#e2ddff"];
 const TRANSACTION_CATEGORIES = [
   { name: "Hire", needles: ["hire"] },
   { name: "Car Fee", needles: ["car fee"] },
@@ -253,6 +254,9 @@ function renderTripCard(trip) {
   const memberInput = card.querySelector(".tripMemberInput");
   const suggestions = card.querySelector(".tripMemberLookup .nameSuggestions");
 
+  if (trip.color) {
+    card.style.setProperty("--trip-card-color", trip.color);
+  }
   titleInput.value = trip.title || "Trip";
   dateInput.value = trip.date || "";
   trip.trip_type = normalizeTripType(trip.trip_type) || (isBoatTrip(trip) ? "Boat" : "Other");
@@ -575,10 +579,11 @@ if (createTripButton) {
       body: JSON.stringify({
         date: tripDateInput.value,
         title: ensureTitleHasType(tripTitleInput.value, tripType),
-        trip_type: tripType,
-        organizer: tripOrganizerInput.value.trim(),
-        members: [],
-      }),
+      trip_type: tripType,
+      organizer: tripOrganizerInput.value.trim(),
+      color: TRIP_CARD_COLORS[Math.floor(Math.random() * TRIP_CARD_COLORS.length)],
+      members: [],
+    }),
     });
     trips = [trip, ...trips];
     tripTitleInput.value = "Trip";

@@ -915,6 +915,8 @@ td:nth-child(3) {
 }
 
 .tripCard {
+  background: var(--trip-card-color, var(--panel));
+  border-color: color-mix(in srgb, var(--trip-card-color, var(--line)) 72%, var(--line));
   display: grid;
   gap: 16px;
   overflow: visible;
