@@ -507,7 +507,7 @@ function renderTransactions(container, transactions) {
   details.className = "searchDropdown tripTransactionSummary";
   const summary = document.createElement("summary");
   summary.className = "searchDropdownSummary";
-  summary.textContent = "Transactions";
+  summary.textContent = "Transactions (past 2 weeks)";
   details.append(summary);
 
   if (!recentTransactions.length) {
