@@ -88,7 +88,7 @@ function ensureTitleHasType(title, tripType) {
     .replace(/^\s*(boat|shore|other)\b[\s:.-]*/i, "")
     .trim();
   const titleBody = cleanedTitle.toLowerCase() === "trip" ? "" : cleanedTitle;
-  return tripType ? `${tripType}${titleBody ? ` ${titleBody}` : ""}` : titleBody || "Trip";
+  return tripType ? `${tripType}${titleBody ? ` ${titleBody}` : ""}` : titleBody || "Name Your Trip";
 }
 
 function isBoatTrip(trip) {
@@ -252,6 +252,16 @@ function renderSuggestions(input, suggestions, onPick) {
   suggestions.classList.remove("hidden");
 }
 
+function pickFirstSuggestion(input, suggestions, onPick) {
+  if (suggestions.classList.contains("hidden") || !suggestions.children.length) return false;
+  const firstSuggestion = suggestions.querySelector(".nameSuggestion");
+  const value = firstSuggestion?.textContent?.trim() || "";
+  if (!value) return false;
+  input.value = value;
+  onPick(value);
+  return true;
+}
+
 function renderTrips() {
   if (countdownTimer) clearInterval(countdownTimer);
   tripCards.replaceChildren();
@@ -285,7 +295,7 @@ function renderTripCard(trip) {
   const suggestions = card.querySelector(".tripMemberLookup .nameSuggestions");
 
   applyTripPattern(card, trip);
-  titleInput.value = trip.title || "Trip";
+  titleInput.value = trip.title || "Name Your Trip";
   dateInput.value = trip.date || "";
   trip.trip_type = normalizeTripType(trip.trip_type) || (isBoatTrip(trip) ? "Boat" : "Other");
   typeInput.value = trip.trip_type;
@@ -321,7 +331,9 @@ function renderTripCard(trip) {
   organizerInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      setOrganizer(organizerInput.value.trim());
+      if (!pickFirstSuggestion(organizerInput, organizerSuggestions, setOrganizer)) {
+        setOrganizer(organizerInput.value.trim());
+      }
       closeSuggestions(organizerSuggestions);
     }
   });
@@ -377,7 +389,9 @@ function renderTripCard(trip) {
   memberInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      addMember(memberInput.value.trim());
+      if (!pickFirstSuggestion(memberInput, suggestions, addMember)) {
+        addMember(memberInput.value.trim());
+      }
       memberInput.value = "";
       closeSuggestions(suggestions);
     }
@@ -619,7 +633,7 @@ if (createTripButton) {
     }),
     });
     trips = [trip, ...trips];
-    tripTitleInput.value = "Trip";
+    tripTitleInput.value = "Name Your Trip";
     tripTypeInput.value = "";
     tripOrganizerInput.value = "";
     renderTrips();
@@ -644,6 +658,11 @@ if (tripOrganizerInput && tripOrganizerSuggestions) {
   tripOrganizerInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
+      if (!pickFirstSuggestion(tripOrganizerInput, tripOrganizerSuggestions, (name) => {
+        tripOrganizerInput.value = name;
+      })) {
+        tripOrganizerInput.value = tripOrganizerInput.value.trim();
+      }
       closeSuggestions(tripOrganizerSuggestions);
     }
   });

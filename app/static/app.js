@@ -243,6 +243,16 @@ function renderNameSuggestions() {
   nameSuggestions.classList.remove("hidden");
 }
 
+function pickFirstRenderedSuggestion() {
+  if (nameSuggestions.classList.contains("hidden") || !nameSuggestions.children.length) return false;
+  const firstSuggestion = nameSuggestions.querySelector(".nameSuggestion");
+  if (firstSuggestion && firstSuggestion.textContent) {
+    nameInput.value = firstSuggestion.textContent;
+    return true;
+  }
+  return false;
+}
+
 function renderCategoryOptions(categories) {
   categoryFilter.replaceChildren(
     Object.assign(document.createElement("option"), {
@@ -471,6 +481,8 @@ nameInput.addEventListener("focus", renderNameSuggestions);
 nameInput.addEventListener("change", searchMember);
 nameInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
+    event.preventDefault();
+    pickFirstRenderedSuggestion();
     closeNameSuggestions();
     searchMember();
   }
