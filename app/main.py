@@ -1135,13 +1135,13 @@ def trips(request: Request, archived: bool = False):
 
 
 @app.get("/api/recent-transactions")
-def recent_transactions(request: Request, days: int = 7):
+def recent_transactions(request: Request, days: int = 30):
     redirect = require_login(request)
     if redirect:
         return redirect
     payload = {
         "found": True,
-        "name": "Everyone (Last 7 days)",
+        "name": "Everyone (Past month)",
         "contact": {"email": "", "phone": ""},
         "emergency": {
             "emergency_contact_name": "",

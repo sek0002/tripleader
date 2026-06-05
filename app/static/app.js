@@ -144,7 +144,7 @@ async function loadNames() {
 
 async function loadDefaultTransactions() {
   try {
-    const response = await fetch("/api/recent-transactions?days=7");
+    const response = await fetch("/api/recent-transactions?days=30");
     const payload = await response.json();
     if (payload?.found) {
       renderMember(payload);
@@ -357,10 +357,10 @@ function renderPurchases() {
 
   purchaseGroups.replaceChildren();
   const categories = Object.keys(currentMemberPayload.categories);
+  const isGlobalView = currentMemberPayload?.scope === "global_last_week";
   let visibleRows = 0;
 
   categories.forEach((category) => {
-    const isGlobalView = currentMemberPayload?.scope === "global_last_week";
     const rows = sortedRows(
       category,
       currentMemberPayload.categories[category].filter((row) => purchaseMatches(row, category))
@@ -374,10 +374,10 @@ function renderPurchases() {
     heading.textContent = category;
     section.append(heading);
 
-  const table = document.createElement("table");
-  table.classList.add("searchTransactionTable");
-  table.classList.toggle("hasNameColumn", isGlobalView);
-  table.append(renderTableHead(category), document.createElement("tbody"));
+    const table = document.createElement("table");
+    table.classList.add("searchTransactionTable");
+    table.classList.toggle("hasNameColumn", isGlobalView);
+    table.append(renderTableHead(category), document.createElement("tbody"));
     const tbody = table.querySelector("tbody");
     rows.forEach((row) => {
       const tr = document.createElement("tr");
