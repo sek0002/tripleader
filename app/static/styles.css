@@ -1083,6 +1083,7 @@ td:nth-child(3) {
 
 .pinWrap {
   position: relative;
+  align-self: start;
 }
 
 .pinButton {
@@ -1305,6 +1306,14 @@ td:nth-child(3) {
 @media (max-width: 820px) {
   .tripCreatePanel {
     grid-template-columns: 1fr;
+  }
+
+  .tripCardHeader {
+    grid-template-columns: minmax(0, 1fr) 42px;
+  }
+
+  .tripCardHeader > div:first-child {
+    min-width: 0;
   }
 
   .tripCreateTitleField,
