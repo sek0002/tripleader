@@ -65,6 +65,8 @@ body {
   justify-content: space-between;
   gap: 20px;
   margin-bottom: 24px;
+  position: relative;
+  z-index: 3000;
 }
 
 .toolbarStatus {
@@ -249,7 +251,7 @@ button:disabled {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  z-index: 20;
+  z-index: 3200;
 }
 
 .pageMenu.hidden {
