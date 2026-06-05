@@ -315,8 +315,12 @@ function renderTableHead(category) {
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
   const activeSort = tableSorts[category];
+  const isGlobalView = currentMemberPayload?.scope === "global_last_week";
+  const columns = isGlobalView
+    ? [{ key: "name", label: "Name", firstDirection: "asc" }, ...sortableColumns]
+    : sortableColumns;
 
-  sortableColumns.forEach((column) => {
+  columns.forEach((column) => {
     const th = document.createElement("th");
     const button = document.createElement("button");
     const isActive = activeSort?.key === column.key;
@@ -372,6 +376,7 @@ function renderPurchases() {
     const table = document.createElement("table");
     table.append(renderTableHead(category), document.createElement("tbody"));
     const tbody = table.querySelector("tbody");
+    const isGlobalView = currentMemberPayload?.scope === "global_last_week";
     rows.forEach((row) => {
       const tr = document.createElement("tr");
       const paidCell = document.createElement("td");
@@ -380,7 +385,11 @@ function renderPurchases() {
       paidBadge.textContent = text(row.paid);
 
       paidCell.append(paidBadge);
-      tr.append(tableCell(row.date), paidCell, tableCell(row.total), tableCell(row.items));
+      if (isGlobalView) {
+        tr.append(tableCell(row.name), tableCell(row.date), paidCell, tableCell(row.total), tableCell(row.items));
+      } else {
+        tr.append(tableCell(row.date), paidCell, tableCell(row.total), tableCell(row.items));
+      }
       tbody.append(tr);
       visibleRows += 1;
     });
