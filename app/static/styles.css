@@ -1277,8 +1277,7 @@ td:nth-child(3) {
 }
 
 @media (max-width: 820px) {
-  .tripCreatePanel,
-  .tripCardHeader {
+  .tripCreatePanel {
     grid-template-columns: 1fr;
   }
 
@@ -1292,7 +1291,7 @@ td:nth-child(3) {
   }
 
   .pinWrap {
-    justify-self: start;
+    justify-self: end;
   }
 }
 
@@ -1318,8 +1317,8 @@ td:nth-child(3) {
   }
 
   .tripTitleLine {
-    align-items: start;
-    display: grid;
+    align-items: center;
+    display: flex;
   }
 
   .tripDateEdit {
