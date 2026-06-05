@@ -693,6 +693,32 @@ td:nth-child(4) {
   width: 56%;
 }
 
+/* 5-column global view: Name | Date | Paid | Total | Items */
+.searchTransactionTable.hasNameColumn th:first-child,
+.searchTransactionTable.hasNameColumn td:first-child {
+  width: 18%;
+}
+
+.searchTransactionTable.hasNameColumn th:nth-child(2),
+.searchTransactionTable.hasNameColumn td:nth-child(2) {
+  width: 14%;
+}
+
+.searchTransactionTable.hasNameColumn th:nth-child(3),
+.searchTransactionTable.hasNameColumn td:nth-child(3) {
+  width: 10%;
+}
+
+.searchTransactionTable.hasNameColumn th:nth-child(4),
+.searchTransactionTable.hasNameColumn td:nth-child(4) {
+  width: 12%;
+}
+
+.searchTransactionTable.hasNameColumn th:nth-child(5),
+.searchTransactionTable.hasNameColumn td:nth-child(5) {
+  width: 46%;
+}
+
 .sortButton {
   background: transparent;
   color: var(--muted);

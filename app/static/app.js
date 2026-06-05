@@ -373,8 +373,10 @@ function renderPurchases() {
     heading.textContent = category;
     section.append(heading);
 
-    const table = document.createElement("table");
-    table.append(renderTableHead(category), document.createElement("tbody"));
+  const table = document.createElement("table");
+  table.classList.add("searchTransactionTable");
+  table.classList.toggle("hasNameColumn", isGlobalView);
+  table.append(renderTableHead(category), document.createElement("tbody"));
     const tbody = table.querySelector("tbody");
     const isGlobalView = currentMemberPayload?.scope === "global_last_week";
     rows.forEach((row) => {
