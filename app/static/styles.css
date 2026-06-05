@@ -490,6 +490,7 @@ label {
 
 .autocompleteWrap {
   position: relative;
+  z-index: 600;
 }
 
 .nameSuggestions {
@@ -505,7 +506,8 @@ label {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
-  z-index: 30;
+  z-index: 1200;
+  max-height: 260px;
 }
 
 .nameSuggestions.hidden {
