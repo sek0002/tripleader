@@ -858,6 +858,46 @@ def _trip_member_transactions(name: str) -> list[dict[str, str]]:
     return rows
 
 
+def _recent_week_transactions(days: int = 7) -> dict[str, dict[str, list[dict[str, str]]]]:
+    try:
+        days = int(days)
+    except Exception:
+        days = 7
+    if days < 1:
+        days = 1
+
+    matches = load_store()
+    if matches.empty or "date" not in matches.columns:
+        return {category: [] for category, _ in CATEGORIES}
+
+    today = datetime.now(timezone.utc).replace(tzinfo=None)
+    cutoff = today - timedelta(days=days)
+    transactions = matches.copy()
+    transactions["_date"] = pd.to_datetime(transactions["date"], errors="coerce")
+    recent = transactions.loc[
+        transactions["_date"].notna()
+        & (transactions["_date"] >= cutoff)
+        & (transactions["_date"] <= today)
+    ].copy()
+
+    grouped: dict[str, list[dict[str, str]]] = {category: [] for category, _ in CATEGORIES}
+    for _, row in recent.sort_values("_date", ascending=False).iterrows():
+        item_text = clean_scalar(row.get("items"))
+        category = category_for_item(item_text)
+        if category not in grouped:
+            continue
+        grouped.setdefault(category, []).append(
+            {
+                "name": clean_scalar(row.get("name")),
+                "date": clean_scalar(row.get("date")),
+                "paid": clean_scalar(row.get("paid")),
+                "total": clean_scalar(row.get("total")),
+                "items": item_text,
+            }
+        )
+    return {category: rows for category, rows in grouped.items() if rows}
+
+
 def _boat_payment_status(name: str, trip_date_value: Any, boat_selected: bool) -> Optional[dict[str, Union[str, bool]]]:
     if not boat_selected:
         return None
@@ -1092,6 +1132,31 @@ def trips(request: Request, archived: bool = False):
     if redirect:
         return redirect
     return {"trips": _trips_for_archive(archived)}
+
+
+@app.get("/api/recent-transactions")
+def recent_transactions(request: Request, days: int = 7):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    payload = {
+        "found": True,
+        "name": "Everyone (Last 7 days)",
+        "contact": {"email": "", "phone": ""},
+        "emergency": {
+            "emergency_contact_name": "",
+            "emergency_contact_relationship": "",
+            "emergency_contact_phone": "",
+            "emergency_contact_phone_2": "",
+        },
+        "membership_status": {"is_current": False, "label": "Membership"},
+        "liability_waiver_status": {"is_current": False, "label": "Liability Waiver"},
+        "hire_status": None,
+        "scope": "global_last_week",
+        "days": max(1, days),
+        "categories": _recent_week_transactions(days),
+    }
+    return payload
 
 
 @app.post("/api/trips")

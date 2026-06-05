@@ -550,6 +550,16 @@ select {
   width: 100%;
 }
 
+input::placeholder,
+input::-webkit-input-placeholder {
+  transition: color 120ms ease;
+}
+
+input:focus::placeholder,
+input:focus::-webkit-input-placeholder {
+  color: transparent;
+}
+
 input:focus {
   border-color: var(--accent);
   outline: 3px solid rgba(15, 109, 122, 0.14);
@@ -1328,6 +1338,15 @@ td:nth-child(3) {
 
   .tripMembers {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tripMemberIdentity {
+    grid-column: auto;
+  }
+
+  .removeTripMemberButton {
+    opacity: 1;
+    transform: scale(1);
   }
 
   .tripMemberAddBar,

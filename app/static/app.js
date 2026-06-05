@@ -142,6 +142,18 @@ async function loadNames() {
   renderNameSuggestions();
 }
 
+async function loadDefaultTransactions() {
+  try {
+    const response = await fetch("/api/recent-transactions?days=7");
+    const payload = await response.json();
+    if (payload?.found) {
+      renderMember(payload);
+    }
+  } catch {
+    // no-op on first-load failure
+  }
+}
+
 function paidClass(value) {
   return String(value).trim().toUpperCase() === "YES" ? "paidYes" : "paidNo";
 }
@@ -151,6 +163,12 @@ function purchaseMatches(row, category) {
   const selectedCategory = categoryFilter.value;
   const selectedMonthYear = monthYearFilter.value;
   const selectedPaid = paidFilter.value;
+  if (currentMemberPayload?.scope === "global_last_week") {
+    const timestamp = Date.parse(row.date);
+    if (!Number.isFinite(timestamp)) return false;
+    const cutoff = Date.now() - (Number(currentMemberPayload.days || 7) * 24 * 60 * 60 * 1000);
+    if (timestamp < cutoff || timestamp > Date.now()) return false;
+  }
   const rowText = [row.date, row.paid, row.total, row.items].map(text).join(" ").toLowerCase();
   const paidValue = String(row.paid || "").trim().toUpperCase();
 
@@ -392,22 +410,33 @@ function renderMember(payload) {
   memberPanel.classList.remove("hidden");
   memberInfo.open = false;
   memberName.textContent = payload.name;
+  const isGlobalView = payload.scope === "global_last_week";
+  memberInfo.classList.toggle("hidden", isGlobalView);
   const isCurrentMember = Boolean(payload.membership_status?.is_current);
-  membershipStatus.classList.toggle("isCurrentMember", isCurrentMember);
-  membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
-  membershipStatus.innerHTML = statusMarkup(
-    isCurrentMember,
-    payload.membership_status?.label || "Membership",
-    "membership"
-  );
+  if (isGlobalView) {
+    membershipStatus.classList.add("hidden");
+    liabilityWaiverStatus.classList.add("hidden");
+  } else {
+    membershipStatus.classList.remove("hidden");
+    liabilityWaiverStatus.classList.remove("hidden");
+    membershipStatus.classList.toggle("isCurrentMember", isCurrentMember);
+    membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
+    membershipStatus.innerHTML = statusMarkup(
+      isCurrentMember,
+      payload.membership_status?.label || "Membership",
+      "membership"
+    );
+  }
   const hasCurrentLiabilityWaiver = Boolean(payload.liability_waiver_status?.is_current);
-  liabilityWaiverStatus.classList.toggle("isCurrentMember", hasCurrentLiabilityWaiver);
-  liabilityWaiverStatus.classList.toggle("isNotCurrentMember", !hasCurrentLiabilityWaiver);
-  liabilityWaiverStatus.innerHTML = statusMarkup(
-    hasCurrentLiabilityWaiver,
-    payload.liability_waiver_status?.label || "Liability Waiver",
-    "liability"
-  );
+  if (!isGlobalView) {
+    liabilityWaiverStatus.classList.toggle("isCurrentMember", hasCurrentLiabilityWaiver);
+    liabilityWaiverStatus.classList.toggle("isNotCurrentMember", !hasCurrentLiabilityWaiver);
+    liabilityWaiverStatus.innerHTML = statusMarkup(
+      hasCurrentLiabilityWaiver,
+      payload.liability_waiver_status?.label || "Liability Waiver",
+      "liability"
+    );
+  }
   memberEmail.textContent = text(payload.contact?.email);
   memberPhone.textContent = text(payload.contact?.phone);
   emergencyName.textContent = text(payload.emergency.emergency_contact_name);
@@ -419,7 +448,9 @@ function renderMember(payload) {
   if (isCurrentHire) {
     hireStatus.classList.add("isCurrentMember");
     hireStatus.innerHTML = statusMarkup(true, payload.hire_status?.label || "Hire", "hire");
-    hireStatus.classList.remove("hidden");
+    if (!isGlobalView) {
+      hireStatus.classList.remove("hidden");
+    }
   }
 
   purchaseSearchInput.value = "";
@@ -507,6 +538,7 @@ async function initApp() {
   } catch {
     availableNames = [];
   }
+  await loadDefaultTransactions();
   applyFreshnessTone();
   setInterval(applyFreshnessTone, 10000);
 }
