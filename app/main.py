@@ -448,6 +448,9 @@ def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
 
     df["name"] = df["name"].map(normalize_member_name)
     df["name_key"] = df["name"].str.casefold()
+    if df.empty:
+        df["_dedupe_key"] = ""
+        return df
     dedupe_source = df[DEDUPLICATION_COLUMNS].astype(str).fillna("")
     df["_dedupe_key"] = dedupe_source.apply(lambda row: "||".join(row.astype(str)), axis=1)
     df = merge_names_by_email(df)
