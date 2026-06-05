@@ -17,6 +17,7 @@ let availableNames = [];
 let trips = [];
 let tripSortDirection = "asc";
 let countdownTimer = null;
+const DEFAULT_TRIP_TITLE = "Name Your Trip";
 const TRANSACTION_CATEGORIES = [
   { name: "Hire", needles: ["hire"] },
   { name: "Car Fee", needles: ["car fee"] },
@@ -85,10 +86,11 @@ function normalizeTripType(value) {
 
 function ensureTitleHasType(title, tripType) {
   const cleanedTitle = String(title || "")
+    .replace(new RegExp(`^${DEFAULT_TRIP_TITLE}$`, "i"), "")
     .replace(/^\s*(boat|shore|other)\b[\s:.-]*/i, "")
     .trim();
   const titleBody = cleanedTitle.toLowerCase() === "trip" ? "" : cleanedTitle;
-  return tripType ? `${tripType}${titleBody ? ` ${titleBody}` : ""}` : titleBody || "Name Your Trip";
+  return tripType ? `${tripType}${titleBody ? ` ${titleBody}` : ""}` : titleBody || DEFAULT_TRIP_TITLE;
 }
 
 function isBoatTrip(trip) {
@@ -610,6 +612,12 @@ function transactionTable(transactions) {
 }
 
 if (createTripButton) {
+  tripTitleInput.addEventListener("focus", () => {
+    if (tripTitleInput.value.trim() === DEFAULT_TRIP_TITLE) {
+      tripTitleInput.value = "";
+    }
+  });
+
   createTripButton.addEventListener("click", async () => {
     const tripType = normalizeTripType(tripTypeInput.value);
   if (!tripType) {
@@ -621,7 +629,7 @@ if (createTripButton) {
     tripOrganizerInput.focus();
     return;
   }
-  const trip = await api("/api/trips", {
+    const trip = await api("/api/trips", {
       method: "POST",
       body: JSON.stringify({
         date: tripDateInput.value,
@@ -633,7 +641,7 @@ if (createTripButton) {
     }),
     });
     trips = [trip, ...trips];
-    tripTitleInput.value = "Name Your Trip";
+    tripTitleInput.value = "";
     tripTypeInput.value = "";
     tripOrganizerInput.value = "";
     renderTrips();
