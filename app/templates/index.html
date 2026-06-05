@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=66">
+    <link rel="stylesheet" href="/static/styles.css?v=67">
   </head>
   <body>
     <main class="shell">
@@ -45,15 +45,23 @@
         </div>
       </section>
 
-      <section class="lookup">
-        <label for="nameInput">Name</label>
-        <div class="searchRow">
-          <div class="autocompleteWrap">
-            <input id="nameInput" type="text" autocomplete="off" placeholder="Start typing a member name" aria-autocomplete="list" aria-controls="nameSuggestions">
-            <div id="nameSuggestions" class="nameSuggestions hidden" role="listbox"></div>
+      <section class="searchOverview">
+        <div class="lookup">
+          <label for="nameInput">Name</label>
+          <div class="searchRow">
+            <div class="autocompleteWrap">
+              <input id="nameInput" type="text" autocomplete="off" placeholder="Start typing a member name" aria-autocomplete="list" aria-controls="nameSuggestions">
+              <div id="nameSuggestions" class="nameSuggestions hidden" role="listbox"></div>
+            </div>
+            <button id="searchButton" type="button">Search</button>
           </div>
-          <button id="searchButton" type="button">Search</button>
         </div>
+
+        <aside class="recentTransactionBox" aria-live="polite">
+          <span>Recent transactions</span>
+          <strong id="recentTransactionTitle">Everyone (Past month)</strong>
+          <small id="recentTransactionMeta">Loading transactions...</small>
+        </aside>
       </section>
 
       <section id="emptyState" class="empty">Select a name to view emergency contact and purchase details.</section>
@@ -143,7 +151,7 @@
       </section>
     </main>
 
-    <script src="/static/theme.js?v=66"></script>
-    <script src="/static/app.js?v=66"></script>
+    <script src="/static/theme.js?v=67"></script>
+    <script src="/static/app.js?v=67"></script>
   </body>
 </html>

@@ -33,6 +33,8 @@ const paidFilter = document.querySelector("#paidFilter");
 const clearFiltersButton = document.querySelector("#clearFiltersButton");
 const filterEmptyState = document.querySelector("#filterEmptyState");
 const purchaseGroups = document.querySelector("#purchaseGroups");
+const recentTransactionTitle = document.querySelector("#recentTransactionTitle");
+const recentTransactionMeta = document.querySelector("#recentTransactionMeta");
 
 let currentMemberPayload = null;
 let availableNames = [];
@@ -152,6 +154,21 @@ async function loadDefaultTransactions() {
   } catch {
     // no-op on first-load failure
   }
+}
+
+function updateRecentTransactionBox(payload) {
+  if (!recentTransactionTitle || !recentTransactionMeta) return;
+  if (payload?.scope !== "global_last_week") {
+    recentTransactionTitle.textContent = "Member transactions";
+    recentTransactionMeta.textContent = "Recent box returns when Search reloads.";
+    return;
+  }
+
+  const categories = payload.categories || {};
+  const rows = Object.values(categories).flat();
+  const categoryCount = Object.keys(categories).length;
+  recentTransactionTitle.textContent = payload.name || "Everyone (Past month)";
+  recentTransactionMeta.textContent = `${rows.length} transactions across ${categoryCount} categories`;
 }
 
 function paidClass(value) {
@@ -404,6 +421,7 @@ function renderPurchases() {
 
 function renderMember(payload) {
   currentMemberPayload = payload;
+  updateRecentTransactionBox(payload);
   [membershipStatus, liabilityWaiverStatus, hireStatus].forEach((statusElement) => {
     statusElement.classList.remove("isCurrentMember", "isNotCurrentMember");
     statusElement.innerHTML = "";
