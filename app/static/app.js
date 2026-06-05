@@ -360,6 +360,7 @@ function renderPurchases() {
   let visibleRows = 0;
 
   categories.forEach((category) => {
+    const isGlobalView = currentMemberPayload?.scope === "global_last_week";
     const rows = sortedRows(
       category,
       currentMemberPayload.categories[category].filter((row) => purchaseMatches(row, category))
@@ -378,7 +379,6 @@ function renderPurchases() {
   table.classList.toggle("hasNameColumn", isGlobalView);
   table.append(renderTableHead(category), document.createElement("tbody"));
     const tbody = table.querySelector("tbody");
-    const isGlobalView = currentMemberPayload?.scope === "global_last_week";
     rows.forEach((row) => {
       const tr = document.createElement("tr");
       const paidCell = document.createElement("td");
