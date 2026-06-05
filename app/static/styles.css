@@ -722,6 +722,14 @@ td:nth-child(4) {
   width: 46%;
 }
 
+.searchTransactionTable {
+  min-width: 680px;
+}
+
+.searchTransactionTable.hasNameColumn {
+  min-width: 820px;
+}
+
 .sortButton {
   background: transparent;
   color: var(--muted);
