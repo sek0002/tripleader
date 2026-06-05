@@ -469,44 +469,10 @@ button:disabled {
   margin-top: 16px;
 }
 
-.searchOverview {
-  align-items: stretch;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+.lookup {
   margin-bottom: 18px;
   position: relative;
   z-index: 50;
-}
-
-.lookup {
-  margin-bottom: 0;
-}
-
-.recentTransactionBox {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-}
-
-.recentTransactionBox span {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.recentTransactionBox strong {
-  font-size: 17px;
-  line-height: 1.25;
-}
-
-.recentTransactionBox small {
-  color: var(--muted);
-  line-height: 1.25;
 }
 
 label {
@@ -520,7 +486,7 @@ label {
 
 .searchRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
 }
 
@@ -800,8 +766,7 @@ td:nth-child(3) {
 
 @media (max-width: 820px) {
   .toolbar,
-  .searchRow,
-  .searchOverview {
+  .searchRow {
     align-items: stretch;
     grid-template-columns: 1fr;
   }
