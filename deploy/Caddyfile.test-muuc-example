@@ -1,0 +1,20 @@
+# If test.muuc.org.au should serve Tripleader instead of the current larry
+# backend, replace the existing test.muuc.org.au block with this block.
+
+test.muuc.org.au {
+        encode gzip zstd
+
+        reverse_proxy 127.0.0.1:8999 {
+                health_uri      /healthz
+                health_interval 10s
+                health_timeout  2s
+
+                header_up X-Real-IP {remote_host}
+                header_up X-Request-Id {http.request.uuid}
+        }
+
+        log {
+                output stderr
+                format json
+        }
+}

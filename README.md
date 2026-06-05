@@ -79,39 +79,34 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
 ### VPS / systemd
 
-Clone the repo and install dependencies:
+Clone the repo into `/opt/tripleader`, install dependencies, and give the service user ownership:
 
 ```bash
-git clone https://github.com/sek0002/tripleader.git
-cd tripleader
+sudo git clone https://github.com/sek0002/tripleader.git /opt/tripleader
+cd /opt/tripleader
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
+sudo chown -R www-data:www-data /opt/tripleader
 ```
 
-Edit `.env`, then create a systemd unit such as `/etc/systemd/system/tripleader.service`:
-
-```ini
-[Unit]
-Description=MUUC Trip Leader App
-After=network.target
-
-[Service]
-WorkingDirectory=/path/to/tripleader
-EnvironmentFile=/path/to/tripleader/.env
-ExecStart=/path/to/tripleader/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8999
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable it:
+Edit `.env`, then install the systemd unit:
 
 ```bash
+sudo cp deploy/tripleader.service /etc/systemd/system/tripleader.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now tripleader
+sudo systemctl status tripleader
 ```
 
-Put Nginx, Caddy, or another reverse proxy in front of it for HTTPS.
+The service binds `127.0.0.1:8999`, so it is not public without Caddy.
+
+Add the Caddy reverse proxy block from `deploy/Caddyfile.tripleader` to your Caddyfile, then reload Caddy:
+
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+If you want `test.muuc.org.au` to serve Tripleader instead of the existing `larry` upstream, use `deploy/Caddyfile.test-muuc-example` as the replacement `test.muuc.org.au` block.

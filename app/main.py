@@ -1030,6 +1030,11 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "app" / "static"), name="s
 templates = Jinja2Templates(directory=BASE_DIR / "app" / "templates")
 
 
+@app.get("/healthz")
+def healthz():
+    return {"ok": True, "service": "tripleader"}
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     redirect = require_login(request)
