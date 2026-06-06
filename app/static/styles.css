@@ -611,6 +611,49 @@ select:focus {
   word-break: break-word;
 }
 
+.copyValueLine {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.copyValueLine > strong,
+.copyValueLine > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.copyValueButton {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 28px;
+  justify-content: center;
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0;
+  width: 28px;
+}
+
+.copyValueButton svg {
+  display: block;
+  height: 15px;
+  width: 15px;
+}
+
+.copyValueButton:hover,
+.copyValueButton:focus,
+.copyValueButton.isCopied {
+  background: var(--secondary);
+  color: var(--accent);
+}
+
 .memberInfoCard--stack,
 .memberInfoCard--stacked {
   display: grid;
@@ -1253,6 +1296,10 @@ td:nth-child(3) {
   display: grid;
   font-size: 13px;
   gap: 4px;
+}
+
+.tripContactLine {
+  justify-content: space-between;
 }
 
 .tripMemberContact.hidden {

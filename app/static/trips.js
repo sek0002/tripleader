@@ -31,6 +31,59 @@ function text(value) {
   return value && String(value).trim() ? String(value).trim() : "Not supplied";
 }
 
+async function copyText(value, button) {
+  const copied = String(value || "").trim();
+  if (!copied || copied === "Not supplied") return;
+
+  try {
+    await navigator.clipboard.writeText(copied);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = copied;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.append(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+
+  if (!button) return;
+  const previousTitle = button.title;
+  button.classList.add("isCopied");
+  button.title = "Copied";
+  window.setTimeout(() => {
+    button.classList.remove("isCopied");
+    button.title = previousTitle;
+  }, 1200);
+}
+
+function copyButton(value, label, type = "copy") {
+  const button = document.createElement("button");
+  button.className = "copyValueButton";
+  button.type = "button";
+  button.setAttribute("aria-label", label);
+  button.title = label.replace(/^Copy\s+/i, "Copy ");
+  button.innerHTML = type === "email"
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2Zm0 3.1V16h16V9.1l-8 5.2-8-5.2Zm1.2-1.1 6.8 4.4L18.8 8H5.2Z" fill="currentColor"></path></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 7.2c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v9.5c0 1.1-.9 2-2 2h-7c-1.1 0-2-.9-2-2V7.2Zm2-.2v9.7h7V7h-7ZM5 10.2h2v2H5v7h8v2H5c-1.1 0-2-.9-2-2v-7c0-1.1.9-2 2-2Z" fill="currentColor"></path></svg>';
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    copyText(value, button);
+  });
+  return button;
+}
+
+function contactLine(label, value, type) {
+  const line = document.createElement("span");
+  line.className = "copyValueLine tripContactLine";
+  const textNode = document.createElement("span");
+  textNode.textContent = `${label}: ${text(value)}`;
+  line.append(textNode, copyButton(value, `Copy ${label.toLowerCase()}`, type));
+  return line;
+}
+
 function escapeAttribute(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -443,11 +496,10 @@ async function renderTripMembers(card, trip) {
 
     const contact = document.createElement("div");
     contact.className = "tripMemberContact hidden";
-    const phone = document.createElement("span");
-    phone.textContent = `Phone: ${text(detail.contact?.phone)}`;
-    const email = document.createElement("span");
-    email.textContent = `Email: ${text(detail.contact?.email)}`;
-    contact.append(phone, email);
+    contact.append(
+      contactLine("Phone", detail.contact?.phone, "phone"),
+      contactLine("Email", detail.contact?.email, "email")
+    );
     nameButton.addEventListener("click", () => contact.classList.toggle("hidden"));
 
     const statuses = document.createElement("div");

@@ -89,6 +89,34 @@ function text(value) {
   return value && String(value).trim() ? String(value).trim() : "Not supplied";
 }
 
+async function copyText(value, button) {
+  const copied = String(value || "").trim();
+  if (!copied || copied === "Not supplied") return;
+
+  try {
+    await navigator.clipboard.writeText(copied);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = copied;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.append(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+
+  if (!button) return;
+  const previousTitle = button.title;
+  button.classList.add("isCopied");
+  button.title = "Copied";
+  window.setTimeout(() => {
+    button.classList.remove("isCopied");
+    button.title = previousTitle;
+  }, 1200);
+}
+
 function escapeAttribute(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -519,6 +547,12 @@ clearFiltersButton.addEventListener("click", () => {
   monthYearFilter.value = "";
   paidFilter.value = "";
   renderPurchases();
+});
+document.querySelectorAll("[data-copy-target]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const target = document.querySelector(`#${button.dataset.copyTarget}`);
+    copyText(target?.textContent, button);
+  });
 });
 nameInput.addEventListener("input", renderNameSuggestions);
 nameInput.addEventListener("focus", renderNameSuggestions);

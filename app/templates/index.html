@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=71">
+    <link rel="stylesheet" href="/static/styles.css?v=72">
   </head>
   <body>
     <main class="shell">
@@ -76,11 +76,21 @@
                 <div class="memberInfoCard memberInfoCard--stacked">
                   <div class="memberInfoField">
                     <span>Phone</span>
-                    <strong id="memberPhone"></strong>
+                    <div class="copyValueLine">
+                      <strong id="memberPhone"></strong>
+                      <button class="copyValueButton" type="button" data-copy-target="memberPhone" aria-label="Copy member phone" title="Copy phone">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 7.2c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v9.5c0 1.1-.9 2-2 2h-7c-1.1 0-2-.9-2-2V7.2Zm2-.2v9.7h7V7h-7ZM5 10.2h2v2H5v7h8v2H5c-1.1 0-2-.9-2-2v-7c0-1.1.9-2 2-2Z" fill="currentColor"></path></svg>
+                      </button>
+                    </div>
                   </div>
                   <div class="memberInfoField">
                     <span>Email</span>
-                    <strong id="memberEmail"></strong>
+                    <div class="copyValueLine">
+                      <strong id="memberEmail"></strong>
+                      <button class="copyValueButton" type="button" data-copy-target="memberEmail" aria-label="Copy member email" title="Copy email">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2Zm0 3.1V16h16V9.1l-8 5.2-8-5.2Zm1.2-1.1 6.8 4.4L18.8 8H5.2Z" fill="currentColor"></path></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div class="memberInfoCard memberInfoCard--stack">
@@ -94,11 +104,21 @@
                   </div>
                   <div class="memberInfoField">
                     <span>Phone</span>
-                    <strong id="emergencyPhone"></strong>
+                    <div class="copyValueLine">
+                      <strong id="emergencyPhone"></strong>
+                      <button class="copyValueButton" type="button" data-copy-target="emergencyPhone" aria-label="Copy emergency phone" title="Copy phone">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 7.2c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v9.5c0 1.1-.9 2-2 2h-7c-1.1 0-2-.9-2-2V7.2Zm2-.2v9.7h7V7h-7ZM5 10.2h2v2H5v7h8v2H5c-1.1 0-2-.9-2-2v-7c0-1.1.9-2 2-2Z" fill="currentColor"></path></svg>
+                      </button>
+                    </div>
                   </div>
                   <div class="memberInfoField">
                     <span>Alternate phone</span>
-                    <strong id="emergencyPhone2"></strong>
+                    <div class="copyValueLine">
+                      <strong id="emergencyPhone2"></strong>
+                      <button class="copyValueButton" type="button" data-copy-target="emergencyPhone2" aria-label="Copy alternate emergency phone" title="Copy phone">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 7.2c0-1.1.9-2 2-2h7c1.1 0 2 .9 2 2v9.5c0 1.1-.9 2-2 2h-7c-1.1 0-2-.9-2-2V7.2Zm2-.2v9.7h7V7h-7ZM5 10.2h2v2H5v7h8v2H5c-1.1 0-2-.9-2-2v-7c0-1.1.9-2 2-2Z" fill="currentColor"></path></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -144,7 +164,7 @@
       </section>
     </main>
 
-    <script src="/static/theme.js?v=71"></script>
-    <script src="/static/app.js?v=71"></script>
+    <script src="/static/theme.js?v=72"></script>
+    <script src="/static/app.js?v=72"></script>
   </body>
 </html>
