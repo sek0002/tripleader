@@ -18,6 +18,8 @@ let trips = [];
 let tripSortDirection = "asc";
 let countdownTimer = null;
 const DEFAULT_TRIP_TITLE = "Name Your Trip";
+const copiedIcon =
+  '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8.5-8.5 1.4 1.4-9.9 9.9Z" fill="currentColor"></path></svg>';
 const TRANSACTION_CATEGORIES = [
   { name: "Hire", needles: ["hire"] },
   { name: "Car Fee", needles: ["car fee"] },
@@ -51,11 +53,14 @@ async function copyText(value, button) {
 
   if (!button) return;
   const previousTitle = button.title;
+  const previousHtml = button.innerHTML;
   button.classList.add("isCopied");
   button.title = "Copied";
+  button.innerHTML = copiedIcon;
   window.setTimeout(() => {
     button.classList.remove("isCopied");
     button.title = previousTitle;
+    button.innerHTML = previousHtml;
   }, 1200);
 }
 

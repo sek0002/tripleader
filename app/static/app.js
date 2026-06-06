@@ -43,6 +43,8 @@ const FRESHNESS_WINDOW_MS = 15 * 60 * 1000;
 const initialLastCheckedAt = lastCheckedStatus?.dataset?.lastCheckedAt || "";
 const initialLastCheckedAtMs = initialLastCheckedAt ? Date.parse(initialLastCheckedAt) : NaN;
 let lastCheckedAtMs = Number.isFinite(initialLastCheckedAtMs) ? initialLastCheckedAtMs : null;
+const copiedIcon =
+  '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8.5-8.5 1.4 1.4-9.9 9.9Z" fill="currentColor"></path></svg>';
 
 function applyFreshnessTone() {
   if (!lastCheckedStatus) return;
@@ -109,11 +111,14 @@ async function copyText(value, button) {
 
   if (!button) return;
   const previousTitle = button.title;
+  const previousHtml = button.innerHTML;
   button.classList.add("isCopied");
   button.title = "Copied";
+  button.innerHTML = copiedIcon;
   window.setTimeout(() => {
     button.classList.remove("isCopied");
     button.title = previousTitle;
+    button.innerHTML = previousHtml;
   }, 1200);
 }
 
