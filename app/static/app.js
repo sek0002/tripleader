@@ -287,6 +287,15 @@ function closeNameSuggestions() {
   nameSuggestions.classList.add("hidden");
 }
 
+function setChildren(element, children) {
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
+  children.forEach((child) => {
+    element.appendChild(child);
+  });
+}
+
 function renderNameSuggestions() {
   const query = nameInput.value.trim().toLowerCase();
   if (!query) {
@@ -301,8 +310,9 @@ function renderNameSuggestions() {
     return;
   }
 
-  nameSuggestions.replaceChildren(
-    ...matches.map((name) => {
+  setChildren(
+    nameSuggestions,
+    matches.map((name) => {
       const button = document.createElement("button");
       button.className = "nameSuggestion";
       button.type = "button";
@@ -330,37 +340,45 @@ function pickFirstRenderedSuggestion() {
 }
 
 function renderCategoryOptions(categories) {
-  categoryFilter.replaceChildren(
+  const options = [
     Object.assign(document.createElement("option"), {
       textContent: "All categories",
       value: "",
     }),
-    ...categories.map((category) =>
+  ].concat(
+    categories.map((category) =>
       Object.assign(document.createElement("option"), {
         textContent: category,
         value: category,
       })
     )
   );
+  setChildren(categoryFilter, options);
+}
+
+function categoryRows(categories) {
+  return Object.keys(categories || {}).reduce((rows, category) => rows.concat(categories[category] || []), []);
 }
 
 function renderMonthYearOptions(categories) {
   const monthKeys = [
-    ...new Set(Object.values(categories).flat().map((row) => monthYearKey(row.date)).filter(Boolean)),
+    ...new Set(categoryRows(categories).map((row) => monthYearKey(row.date)).filter(Boolean)),
   ].sort().reverse();
 
-  monthYearFilter.replaceChildren(
+  const options = [
     Object.assign(document.createElement("option"), {
       textContent: "All months",
       value: "",
     }),
-    ...monthKeys.map((key) =>
+  ].concat(
+    monthKeys.map((key) =>
       Object.assign(document.createElement("option"), {
         textContent: monthYearLabel(key),
         value: key,
       })
     )
   );
+  setChildren(monthYearFilter, options);
 }
 
 function tableCell(value) {
@@ -413,7 +431,7 @@ function renderTableHead(category) {
 function renderPurchases() {
   if (!currentMemberPayload?.found) return;
 
-  purchaseGroups.replaceChildren();
+  setChildren(purchaseGroups, []);
   const categories = Object.keys(currentMemberPayload.categories);
   const isGlobalView = currentMemberPayload?.scope === "global_last_week";
   let visibleRows = 0;
