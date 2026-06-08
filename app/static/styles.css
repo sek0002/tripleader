@@ -931,6 +931,19 @@ td:nth-child(3) {
   width: 100%;
 }
 
+.loginQuickLinks {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 14px;
+}
+
+.loginQuickLinks .buttonLink {
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+}
+
 .floatingThemeToggle {
   position: fixed;
   right: 24px;
