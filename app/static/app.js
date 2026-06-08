@@ -177,7 +177,7 @@ async function loadNames() {
   const response = await fetch("/api/names");
   const payload = await response.json();
   availableNames = payload.names;
-  renderNameSuggestions();
+  closeNameSuggestions();
 }
 
 async function loadDefaultTransactions() {
@@ -272,9 +272,12 @@ function closeNameSuggestions() {
 
 function renderNameSuggestions() {
   const query = nameInput.value.trim().toLowerCase();
-  const matches = query
-    ? availableNames.filter((name) => name.toLowerCase().includes(query))
-    : availableNames;
+  if (!query) {
+    closeNameSuggestions();
+    return;
+  }
+
+  const matches = availableNames.filter((name) => name.toLowerCase().includes(query));
 
   if (!matches.length) {
     closeNameSuggestions();
@@ -564,7 +567,6 @@ document.querySelectorAll("[data-copy-target]").forEach((button) => {
   });
 });
 nameInput.addEventListener("input", renderNameSuggestions);
-nameInput.addEventListener("focus", renderNameSuggestions);
 nameInput.addEventListener("change", searchMember);
 nameInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
