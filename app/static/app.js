@@ -40,7 +40,7 @@ let availableNames = [];
 let tableSorts = {};
 let memberSearchSequence = 0;
 const FRESHNESS_WINDOW_MS = 15 * 60 * 1000;
-const initialLastCheckedAt = lastCheckedStatus && lastCheckedStatus.dataset ? lastCheckedStatus.dataset.lastCheckedAt || "" : "";
+const initialLastCheckedAt = lastCheckedStatus?.dataset?.lastCheckedAt || "";
 const initialLastCheckedAtMs = initialLastCheckedAt ? Date.parse(initialLastCheckedAt) : NaN;
 let lastCheckedAtMs = Number.isFinite(initialLastCheckedAtMs) ? initialLastCheckedAtMs : null;
 const copiedIcon =
@@ -65,7 +65,7 @@ const swRegister = () => {
     return;
   }
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/static/service-worker.js").catch(function () {});
+    navigator.serviceWorker.register("/static/service-worker.js").catch(() => {});
   });
 };
 
@@ -97,7 +97,7 @@ async function copyText(value, button) {
 
   try {
     await navigator.clipboard.writeText(copied);
-  } catch (error) {
+  } catch {
     const textarea = document.createElement("textarea");
     textarea.value = copied;
     textarea.setAttribute("readonly", "");
@@ -184,10 +184,10 @@ async function loadDefaultTransactions() {
   try {
     const response = await fetch("/api/recent-transactions?days=30");
     const payload = await response.json();
-    if (payload && payload.found) {
+    if (payload?.found) {
       renderMember(payload);
     }
-  } catch (error) {
+  } catch {
     // no-op on first-load failure
   }
 }
@@ -201,7 +201,7 @@ function purchaseMatches(row, category) {
   const selectedCategory = categoryFilter.value;
   const selectedMonthYear = monthYearFilter.value;
   const selectedPaid = paidFilter.value;
-  if (currentMemberPayload && currentMemberPayload.scope === "global_last_week") {
+  if (currentMemberPayload?.scope === "global_last_week") {
     const timestamp = Date.parse(row.date);
     if (!Number.isFinite(timestamp)) return false;
     const cutoff = Date.now() - (Number(currentMemberPayload.days || 7) * 24 * 60 * 60 * 1000);
@@ -270,15 +270,6 @@ function closeNameSuggestions() {
   nameSuggestions.classList.add("hidden");
 }
 
-function setChildren(element, children) {
-  while (element.firstChild) {
-    element.removeChild(element.firstChild);
-  }
-  children.forEach((child) => {
-    element.appendChild(child);
-  });
-}
-
 function renderNameSuggestions() {
   const query = nameInput.value.trim().toLowerCase();
   if (!query) {
@@ -293,9 +284,8 @@ function renderNameSuggestions() {
     return;
   }
 
-  setChildren(
-    nameSuggestions,
-    matches.map((name) => {
+  nameSuggestions.replaceChildren(
+    ...matches.map((name) => {
       const button = document.createElement("button");
       button.className = "nameSuggestion";
       button.type = "button";
@@ -323,20 +313,18 @@ function pickFirstRenderedSuggestion() {
 }
 
 function renderCategoryOptions(categories) {
-  const options = [
+  categoryFilter.replaceChildren(
     Object.assign(document.createElement("option"), {
       textContent: "All categories",
       value: "",
     }),
-  ].concat(
-    categories.map((category) =>
+    ...categories.map((category) =>
       Object.assign(document.createElement("option"), {
         textContent: category,
         value: category,
       })
     )
   );
-  setChildren(categoryFilter, options);
 }
 
 function categoryRows(categories) {
@@ -344,32 +332,22 @@ function categoryRows(categories) {
 }
 
 function renderMonthYearOptions(categories) {
-  const seenMonthKeys = {};
-  const monthKeys = categoryRows(categories)
-    .map((row) => monthYearKey(row.date))
-    .filter(Boolean)
-    .filter((key) => {
-      if (seenMonthKeys[key]) return false;
-      seenMonthKeys[key] = true;
-      return true;
-    })
-    .sort()
-    .reverse();
+  const monthKeys = [
+    ...new Set(categoryRows(categories).map((row) => monthYearKey(row.date)).filter(Boolean)),
+  ].sort().reverse();
 
-  const options = [
+  monthYearFilter.replaceChildren(
     Object.assign(document.createElement("option"), {
       textContent: "All months",
       value: "",
     }),
-  ].concat(
-    monthKeys.map((key) =>
+    ...monthKeys.map((key) =>
       Object.assign(document.createElement("option"), {
         textContent: monthYearLabel(key),
         value: key,
       })
     )
   );
-  setChildren(monthYearFilter, options);
 }
 
 function tableCell(value) {
@@ -382,15 +360,15 @@ function renderTableHead(category) {
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
   const activeSort = tableSorts[category];
-  const isGlobalView = currentMemberPayload && currentMemberPayload.scope === "global_last_week";
+  const isGlobalView = currentMemberPayload?.scope === "global_last_week";
   const columns = isGlobalView
-    ? [{ key: "name", label: "Name", firstDirection: "asc" }].concat(sortableColumns)
+    ? [{ key: "name", label: "Name", firstDirection: "asc" }, ...sortableColumns]
     : sortableColumns;
 
   columns.forEach((column) => {
     const th = document.createElement("th");
     const button = document.createElement("button");
-    const isActive = activeSort && activeSort.key === column.key;
+    const isActive = activeSort?.key === column.key;
     const indicator = isActive ? (activeSort.direction === "asc" ? " ↑" : " ↓") : "";
 
     button.className = `sortButton${isActive ? " activeSort" : ""}`;
@@ -402,7 +380,7 @@ function renderTableHead(category) {
       tableSorts[category] = {
         key: column.key,
         direction:
-          currentSort && currentSort.key === column.key && currentSort.direction === column.firstDirection
+          currentSort?.key === column.key && currentSort.direction === column.firstDirection
             ? column.firstDirection === "asc"
               ? "desc"
               : "asc"
@@ -420,11 +398,11 @@ function renderTableHead(category) {
 }
 
 function renderPurchases() {
-  if (!currentMemberPayload || !currentMemberPayload.found) return;
+  if (!currentMemberPayload?.found) return;
 
-  setChildren(purchaseGroups, []);
+  purchaseGroups.replaceChildren();
   const categories = Object.keys(currentMemberPayload.categories);
-  const isGlobalView = currentMemberPayload && currentMemberPayload.scope === "global_last_week";
+  const isGlobalView = currentMemberPayload?.scope === "global_last_week";
   let visibleRows = 0;
 
   categories.forEach((category) => {
@@ -490,12 +468,7 @@ function renderMember(payload) {
   memberName.textContent = payload.name;
   const isGlobalView = payload.scope === "global_last_week";
   memberInfo.classList.toggle("hidden", isGlobalView);
-  const membershipStatusPayload = payload.membership_status || {};
-  const liabilityWaiverStatusPayload = payload.liability_waiver_status || {};
-  const contactPayload = payload.contact || {};
-  const emergencyPayload = payload.emergency || {};
-  const hireStatusPayload = payload.hire_status || {};
-  const isCurrentMember = Boolean(membershipStatusPayload.is_current);
+  const isCurrentMember = Boolean(payload.membership_status?.is_current);
   if (isGlobalView) {
     membershipStatus.classList.add("hidden");
     liabilityWaiverStatus.classList.add("hidden");
@@ -506,31 +479,31 @@ function renderMember(payload) {
     membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
     membershipStatus.innerHTML = statusMarkup(
       isCurrentMember,
-      membershipStatusPayload.label || "Membership",
+      payload.membership_status?.label || "Membership",
       "membership"
     );
   }
-  const hasCurrentLiabilityWaiver = Boolean(liabilityWaiverStatusPayload.is_current);
+  const hasCurrentLiabilityWaiver = Boolean(payload.liability_waiver_status?.is_current);
   if (!isGlobalView) {
     liabilityWaiverStatus.classList.toggle("isCurrentMember", hasCurrentLiabilityWaiver);
     liabilityWaiverStatus.classList.toggle("isNotCurrentMember", !hasCurrentLiabilityWaiver);
     liabilityWaiverStatus.innerHTML = statusMarkup(
       hasCurrentLiabilityWaiver,
-      liabilityWaiverStatusPayload.label || "Liability Waiver",
+      payload.liability_waiver_status?.label || "Liability Waiver",
       "liability"
     );
   }
-  memberEmail.textContent = text(contactPayload.email);
-  memberPhone.textContent = text(contactPayload.phone);
-  emergencyName.textContent = text(emergencyPayload.emergency_contact_name);
-  emergencyRelationship.textContent = text(emergencyPayload.emergency_contact_relationship);
-  emergencyPhone.textContent = text(emergencyPayload.emergency_contact_phone);
-  emergencyPhone2.textContent = text(emergencyPayload.emergency_contact_phone_2);
+  memberEmail.textContent = text(payload.contact?.email);
+  memberPhone.textContent = text(payload.contact?.phone);
+  emergencyName.textContent = text(payload.emergency.emergency_contact_name);
+  emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);
+  emergencyPhone.textContent = text(payload.emergency.emergency_contact_phone);
+  emergencyPhone2.textContent = text(payload.emergency.emergency_contact_phone_2);
 
-  const isCurrentHire = Boolean(hireStatusPayload.is_current);
+  const isCurrentHire = Boolean(payload.hire_status?.is_current);
   if (isCurrentHire) {
     hireStatus.classList.add("isCurrentMember");
-    hireStatus.innerHTML = statusMarkup(true, hireStatusPayload.label || "Hire", "hire");
+    hireStatus.innerHTML = statusMarkup(true, payload.hire_status?.label || "Hire", "hire");
     if (!isGlobalView) {
       hireStatus.classList.remove("hidden");
     }
@@ -594,7 +567,7 @@ clearFiltersButton.addEventListener("click", () => {
 document.querySelectorAll("[data-copy-target]").forEach((button) => {
   button.addEventListener("click", () => {
     const target = document.querySelector(`#${button.dataset.copyTarget}`);
-    copyText(target ? target.textContent : "", button);
+    copyText(target?.textContent, button);
   });
 });
 nameInput.addEventListener("input", renderNameSuggestions);
@@ -618,13 +591,13 @@ async function loadStatus() {
 async function initApp() {
   try {
     await loadStatus();
-  } catch (error) {
+  } catch {
     applyFreshnessTone();
   }
 
   try {
     await loadNames();
-  } catch (error) {
+  } catch {
     availableNames = [];
   }
   await loadDefaultTransactions();
