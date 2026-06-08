@@ -40,7 +40,7 @@ let availableNames = [];
 let tableSorts = {};
 let memberSearchSequence = 0;
 const FRESHNESS_WINDOW_MS = 15 * 60 * 1000;
-const initialLastCheckedAt = lastCheckedStatus?.dataset?.lastCheckedAt || "";
+const initialLastCheckedAt = lastCheckedStatus && lastCheckedStatus.dataset ? lastCheckedStatus.dataset.lastCheckedAt || "" : "";
 const initialLastCheckedAtMs = initialLastCheckedAt ? Date.parse(initialLastCheckedAt) : NaN;
 let lastCheckedAtMs = Number.isFinite(initialLastCheckedAtMs) ? initialLastCheckedAtMs : null;
 const copiedIcon =
@@ -65,7 +65,7 @@ const swRegister = () => {
     return;
   }
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/static/service-worker.js").catch(() => {});
+    navigator.serviceWorker.register("/static/service-worker.js").catch(function () {});
   });
 };
 
@@ -97,7 +97,7 @@ async function copyText(value, button) {
 
   try {
     await navigator.clipboard.writeText(copied);
-  } catch {
+  } catch (error) {
     const textarea = document.createElement("textarea");
     textarea.value = copied;
     textarea.setAttribute("readonly", "");
@@ -187,7 +187,7 @@ async function loadDefaultTransactions() {
     if (payload?.found) {
       renderMember(payload);
     }
-  } catch {
+  } catch (error) {
     // no-op on first-load failure
   }
 }
@@ -201,7 +201,7 @@ function purchaseMatches(row, category) {
   const selectedCategory = categoryFilter.value;
   const selectedMonthYear = monthYearFilter.value;
   const selectedPaid = paidFilter.value;
-  if (currentMemberPayload?.scope === "global_last_week") {
+  if (currentMemberPayload && currentMemberPayload.scope === "global_last_week") {
     const timestamp = parseDateTimestamp(row.date);
     if (!Number.isFinite(timestamp)) return false;
     const cutoff = Date.now() - (Number(currentMemberPayload.days || 7) * 24 * 60 * 60 * 1000);
@@ -391,7 +391,7 @@ function renderTableHead(category) {
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
   const activeSort = tableSorts[category];
-  const isGlobalView = currentMemberPayload?.scope === "global_last_week";
+  const isGlobalView = currentMemberPayload && currentMemberPayload.scope === "global_last_week";
   const columns = isGlobalView
     ? [{ key: "name", label: "Name", firstDirection: "asc" }, ...sortableColumns]
     : sortableColumns;
@@ -399,7 +399,7 @@ function renderTableHead(category) {
   columns.forEach((column) => {
     const th = document.createElement("th");
     const button = document.createElement("button");
-    const isActive = activeSort?.key === column.key;
+    const isActive = activeSort && activeSort.key === column.key;
     const indicator = isActive ? (activeSort.direction === "asc" ? " ↑" : " ↓") : "";
 
     button.className = `sortButton${isActive ? " activeSort" : ""}`;
@@ -411,7 +411,7 @@ function renderTableHead(category) {
       tableSorts[category] = {
         key: column.key,
         direction:
-          currentSort?.key === column.key && currentSort.direction === column.firstDirection
+          currentSort && currentSort.key === column.key && currentSort.direction === column.firstDirection
             ? column.firstDirection === "asc"
               ? "desc"
               : "asc"
@@ -429,11 +429,11 @@ function renderTableHead(category) {
 }
 
 function renderPurchases() {
-  if (!currentMemberPayload?.found) return;
+  if (!currentMemberPayload || !currentMemberPayload.found) return;
 
   setChildren(purchaseGroups, []);
   const categories = Object.keys(currentMemberPayload.categories);
-  const isGlobalView = currentMemberPayload?.scope === "global_last_week";
+  const isGlobalView = currentMemberPayload && currentMemberPayload.scope === "global_last_week";
   let visibleRows = 0;
 
   categories.forEach((category) => {
@@ -499,7 +499,12 @@ function renderMember(payload) {
   memberName.textContent = payload.name;
   const isGlobalView = payload.scope === "global_last_week";
   memberInfo.classList.toggle("hidden", isGlobalView);
-  const isCurrentMember = Boolean(payload.membership_status?.is_current);
+  const membershipStatusPayload = payload.membership_status || {};
+  const liabilityWaiverStatusPayload = payload.liability_waiver_status || {};
+  const contactPayload = payload.contact || {};
+  const emergencyPayload = payload.emergency || {};
+  const hireStatusPayload = payload.hire_status || {};
+  const isCurrentMember = Boolean(membershipStatusPayload.is_current);
   if (isGlobalView) {
     membershipStatus.classList.add("hidden");
     liabilityWaiverStatus.classList.add("hidden");
@@ -510,31 +515,31 @@ function renderMember(payload) {
     membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
     membershipStatus.innerHTML = statusMarkup(
       isCurrentMember,
-      payload.membership_status?.label || "Membership",
+      membershipStatusPayload.label || "Membership",
       "membership"
     );
   }
-  const hasCurrentLiabilityWaiver = Boolean(payload.liability_waiver_status?.is_current);
+  const hasCurrentLiabilityWaiver = Boolean(liabilityWaiverStatusPayload.is_current);
   if (!isGlobalView) {
     liabilityWaiverStatus.classList.toggle("isCurrentMember", hasCurrentLiabilityWaiver);
     liabilityWaiverStatus.classList.toggle("isNotCurrentMember", !hasCurrentLiabilityWaiver);
     liabilityWaiverStatus.innerHTML = statusMarkup(
       hasCurrentLiabilityWaiver,
-      payload.liability_waiver_status?.label || "Liability Waiver",
+      liabilityWaiverStatusPayload.label || "Liability Waiver",
       "liability"
     );
   }
-  memberEmail.textContent = text(payload.contact?.email);
-  memberPhone.textContent = text(payload.contact?.phone);
-  emergencyName.textContent = text(payload.emergency.emergency_contact_name);
-  emergencyRelationship.textContent = text(payload.emergency.emergency_contact_relationship);
-  emergencyPhone.textContent = text(payload.emergency.emergency_contact_phone);
-  emergencyPhone2.textContent = text(payload.emergency.emergency_contact_phone_2);
+  memberEmail.textContent = text(contactPayload.email);
+  memberPhone.textContent = text(contactPayload.phone);
+  emergencyName.textContent = text(emergencyPayload.emergency_contact_name);
+  emergencyRelationship.textContent = text(emergencyPayload.emergency_contact_relationship);
+  emergencyPhone.textContent = text(emergencyPayload.emergency_contact_phone);
+  emergencyPhone2.textContent = text(emergencyPayload.emergency_contact_phone_2);
 
-  const isCurrentHire = Boolean(payload.hire_status?.is_current);
+  const isCurrentHire = Boolean(hireStatusPayload.is_current);
   if (isCurrentHire) {
     hireStatus.classList.add("isCurrentMember");
-    hireStatus.innerHTML = statusMarkup(true, payload.hire_status?.label || "Hire", "hire");
+    hireStatus.innerHTML = statusMarkup(true, hireStatusPayload.label || "Hire", "hire");
     if (!isGlobalView) {
       hireStatus.classList.remove("hidden");
     }
@@ -598,7 +603,7 @@ clearFiltersButton.addEventListener("click", () => {
 document.querySelectorAll("[data-copy-target]").forEach((button) => {
   button.addEventListener("click", () => {
     const target = document.querySelector(`#${button.dataset.copyTarget}`);
-    copyText(target?.textContent, button);
+    copyText(target ? target.textContent : "", button);
   });
 });
 nameInput.addEventListener("input", renderNameSuggestions);
@@ -622,13 +627,13 @@ async function loadStatus() {
 async function initApp() {
   try {
     await loadStatus();
-  } catch {
+  } catch (error) {
     applyFreshnessTone();
   }
 
   try {
     await loadNames();
-  } catch {
+  } catch (error) {
     availableNames = [];
   }
   await loadDefaultTransactions();
