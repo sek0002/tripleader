@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=74">
+    <link rel="stylesheet" href="/static/styles.css?v=75">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
@@ -29,6 +29,8 @@
             <a class="pageSwitchItem isActive" href="/trips">Plan</a>
           </nav>
           <button id="refreshButton" type="button">Refresh</button>
+          <a class="buttonLink secondaryButton topActionLink" href="https://forms.gle/WjdJsYN9Qrv1iahY9" target="_blank" rel="noopener noreferrer">Gear Hire</a>
+          <a class="buttonLink secondaryButton topActionLink" href="https://forms.gle/R2cN92bEKPkcdBqh8" target="_blank" rel="noopener noreferrer">Trip Report</a>
           <div class="menuWrap">
             <button id="menuButton" class="menuButton secondaryButton" type="button" aria-expanded="false" aria-controls="pageMenu">Menu</button>
             <div id="pageMenu" class="pageMenu hidden">
@@ -146,7 +148,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=74"></script>
-    <script src="/static/trips.js?v=74"></script>
+    <script src="/static/theme.js?v=75"></script>
+    <script src="/static/trips.js?v=75"></script>
   </body>
 </html>

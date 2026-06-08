@@ -198,6 +198,10 @@ button:disabled {
   gap: 10px;
 }
 
+.topActionLink {
+  white-space: nowrap;
+}
+
 .pageSwitch {
   background: var(--secondary);
   border: 1px solid var(--line);
