@@ -1,4 +1,4 @@
-# MUUC Trip Leader App
+# MUUC Trip Organiser App
 
 FastAPI app for syncing TeamApp purchases into a local CSV beside the hosted app and looking up emergency contact and purchase details by member name.
 
@@ -94,7 +94,7 @@ Edit `.env`, then create a systemd unit such as `/etc/systemd/system/tripleader.
 
 ```ini
 [Unit]
-Description=MUUC Trip Leader App
+Description=MUUC Trip Organiser App
 After=network.target
 
 [Service]

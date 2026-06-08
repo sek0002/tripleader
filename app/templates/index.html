@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f6d7a">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="MUUC Trip Organizer">
+    <meta name="apple-mobile-web-app-title" content="MUUC Trip Organiser">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/static/manifest.webmanifest">
     <link rel="icon" type="image/png" href="/static/icons/muuc-logo-backdrop.png">
     <link rel="apple-touch-icon" href="/static/icons/muuc-logo-backdrop.png">
-    <title>MUUC Trip Organizer</title>
+    <title>MUUC Trip Organiser</title>
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=77">
+    <link rel="stylesheet" href="/static/styles.css?v=78">
   </head>
   <body>
     <main class="shell">
       <section class="toolbar">
         <div class="toolbarStatus">
-          <h1>MUUC Trip Organizer</h1>
+          <h1>MUUC Trip Organiser</h1>
           <div class="syncStatusPanel">
             <p id="syncStatus">{{ sync_status_text | default("Preparing purchase store...") }}</p>
             <p id="lastCheckedStatus" class="lastCheckedStatus" data-last-checked-at="{{ last_checked_at | default("") }}" style="color: {{ last_checked_color | default("hsl(120, 72%, 45%)") }}">{{ last_checked_text | default("Last checked: loading...") }}</p>
@@ -170,7 +170,7 @@
       </section>
     </main>
 
-    <script src="/static/theme.js?v=77"></script>
-    <script src="/static/app.js?v=77"></script>
+    <script src="/static/theme.js?v=78"></script>
+    <script src="/static/app.js?v=78"></script>
   </body>
 </html>

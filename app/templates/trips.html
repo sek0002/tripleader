@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f6d7a">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="MUUC Trip Organizer">
+    <meta name="apple-mobile-web-app-title" content="MUUC Trip Organiser">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/static/manifest.webmanifest">
     <link rel="icon" type="image/png" href="/static/icons/muuc-logo-backdrop.png">
     <link rel="apple-touch-icon" href="/static/icons/muuc-logo-backdrop.png">
-    <title>MUUC Trip Organizer</title>
+    <title>MUUC Trip Organiser</title>
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=77">
+    <link rel="stylesheet" href="/static/styles.css?v=78">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
@@ -80,9 +80,9 @@
           </select>
         </div>
         <div class="tripCreateOrganizerField">
-          <label for="tripOrganizerInput">Organizer</label>
+          <label for="tripOrganizerInput">Organiser</label>
           <div class="autocompleteWrap">
-            <input id="tripOrganizerInput" type="text" autocomplete="off" placeholder="Start typing organizer name" aria-autocomplete="list" required>
+            <input id="tripOrganizerInput" type="text" autocomplete="off" placeholder="Start typing organiser name" aria-autocomplete="list" required>
             <div id="tripOrganizerSuggestions" class="nameSuggestions hidden" role="listbox"></div>
           </div>
         </div>
@@ -114,9 +114,9 @@
                 <option value="Other">Other</option>
               </select>
               <div class="tripOrganizerEditWrap">
-                <label>Organizer</label>
+                <label>Organiser</label>
                 <div class="autocompleteWrap">
-                  <input class="tripOrganizerEdit" type="text" autocomplete="off" placeholder="Start typing organizer name" aria-autocomplete="list">
+                  <input class="tripOrganizerEdit" type="text" autocomplete="off" placeholder="Start typing organiser name" aria-autocomplete="list">
                   <div class="nameSuggestions hidden" role="listbox"></div>
                 </div>
               </div>
@@ -150,7 +150,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=77"></script>
-    <script src="/static/trips.js?v=77"></script>
+    <script src="/static/theme.js?v=78"></script>
+    <script src="/static/trips.js?v=78"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 {
-  "name": "MUUC Trip Organizer",
-  "short_name": "MUUC Organizer",
+  "name": "MUUC Trip Organiser",
+  "short_name": "MUUC Organiser",
   "description": "MUUC trip planning, membership, and purchase lookup app.",
   "start_url": "/",
   "scope": "/",
