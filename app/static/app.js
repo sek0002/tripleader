@@ -202,7 +202,7 @@ function purchaseMatches(row, category) {
   const selectedMonthYear = monthYearFilter.value;
   const selectedPaid = paidFilter.value;
   if (currentMemberPayload?.scope === "global_last_week") {
-    const timestamp = Date.parse(row.date);
+    const timestamp = parseDateTimestamp(row.date);
     if (!Number.isFinite(timestamp)) return false;
     const cutoff = Date.now() - (Number(currentMemberPayload.days || 7) * 24 * 60 * 60 * 1000);
     if (timestamp < cutoff || timestamp > Date.now()) return false;
@@ -219,7 +219,7 @@ function purchaseMatches(row, category) {
 }
 
 function monthYearKey(value) {
-  const timestamp = Date.parse(value);
+  const timestamp = parseDateTimestamp(value);
   if (Number.isNaN(timestamp)) return "";
   return new Date(timestamp).toISOString().slice(0, 7);
 }
@@ -231,8 +231,25 @@ function monthYearLabel(key) {
   return date.toLocaleString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
 }
 
-function parseDate(value) {
+function parseDateTimestamp(value) {
+  const dateText = String(value || "").trim();
+  let match = dateText.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (match) {
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime();
+  }
+
+  match = dateText.match(/^(\d{1,2})[/. -](\d{1,2})[/. -](\d{2,4})/);
+  if (match) {
+    const year = Number(match[3].length === 2 ? "20" + match[3] : match[3]);
+    return new Date(year, Number(match[2]) - 1, Number(match[1])).getTime();
+  }
+
   const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? NaN : timestamp;
+}
+
+function parseDate(value) {
+  const timestamp = parseDateTimestamp(value);
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 

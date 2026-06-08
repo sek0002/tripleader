@@ -1,4 +1,4 @@
-const CACHE_NAME = "muuc-tripleader-cache-79";
+const CACHE_NAME = "muuc-tripleader-cache-80";
 const APP_SHELL = [
   "/static/styles.css?v=79",
   "/static/app.js?v=79",
