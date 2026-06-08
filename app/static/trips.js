@@ -259,14 +259,18 @@ function sortedTrips() {
 
 async function refreshStore() {
   refreshButton.disabled = true;
-  refreshButton.textContent = "Refreshing";
+  refreshButton.classList.add("isRefreshing");
+  refreshButton.setAttribute("aria-label", "Refreshing");
+  refreshButton.title = "Refreshing";
   try {
     await api("/api/refresh", { method: "POST" });
     await loadNames();
     await loadTrips();
   } finally {
     refreshButton.disabled = false;
-    refreshButton.textContent = "Refresh";
+    refreshButton.classList.remove("isRefreshing");
+    refreshButton.setAttribute("aria-label", "Refresh");
+    refreshButton.title = "Refresh";
   }
 }
 

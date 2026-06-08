@@ -198,6 +198,50 @@ button:disabled {
   gap: 10px;
 }
 
+.topActions > .topActionLink,
+.topActions > .menuWrap {
+  flex: 0 0 116px;
+  width: 116px;
+}
+
+.topActions > .topActionLink,
+.topActions .menuButton {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  padding-left: 8px;
+  padding-right: 8px;
+  width: 100%;
+}
+
+.refreshIconButton {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 42px;
+  height: 42px;
+  justify-content: center;
+  min-height: 42px;
+  min-width: 42px;
+  padding: 0;
+  width: 42px;
+}
+
+.refreshIconButton svg {
+  display: block;
+  height: 18px;
+  width: 18px;
+}
+
+.refreshIconButton.isRefreshing svg {
+  animation: refreshSpin 900ms linear infinite;
+}
+
+@keyframes refreshSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .topActionLink {
   white-space: nowrap;
 }
@@ -1428,12 +1472,27 @@ td:nth-child(3) {
   .topActions {
     align-items: stretch;
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 42px repeat(3, minmax(0, 1fr));
+    width: 100%;
   }
 
   .pageSwitch {
     grid-column: 1 / -1;
     width: 100%;
+  }
+
+  .topActions > .topActionLink,
+  .topActions > .menuWrap {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .topActions > .topActionLink,
+  .topActions .menuButton {
+    font-size: 13px;
+    min-width: 0;
+    padding-left: 4px;
+    padding-right: 4px;
   }
 
   .pageSwitchItem {

@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=75">
+    <link rel="stylesheet" href="/static/styles.css?v=77">
   </head>
   <body>
     <main class="shell">
@@ -31,7 +31,9 @@
             <a class="pageSwitchItem isActive" href="/">Search</a>
             <a class="pageSwitchItem" href="/trips">Plan</a>
           </nav>
-          <button id="refreshButton" type="button">Refresh</button>
+          <button id="refreshButton" class="refreshIconButton" type="button" aria-label="Refresh" title="Refresh">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.7 6.3A7.9 7.9 0 0 0 12 4a8 8 0 1 0 7.4 5h-2.2A6 6 0 1 1 12 6c1.6 0 3.1.6 4.2 1.8L13 11h8V3l-3.3 3.3Z" fill="currentColor"></path></svg>
+          </button>
           <a class="buttonLink secondaryButton topActionLink" href="https://forms.gle/WjdJsYN9Qrv1iahY9" target="_blank" rel="noopener noreferrer">Gear Hire</a>
           <a class="buttonLink secondaryButton topActionLink" href="https://forms.gle/R2cN92bEKPkcdBqh8" target="_blank" rel="noopener noreferrer">Trip Report</a>
           <div class="menuWrap">
@@ -168,7 +170,7 @@
       </section>
     </main>
 
-    <script src="/static/theme.js?v=75"></script>
-    <script src="/static/app.js?v=75"></script>
+    <script src="/static/theme.js?v=77"></script>
+    <script src="/static/app.js?v=77"></script>
   </body>
 </html>

@@ -157,14 +157,18 @@ function setStatus(payload) {
 
 async function refreshStore() {
   refreshButton.disabled = true;
-  refreshButton.textContent = "Refreshing";
+  refreshButton.classList.add("isRefreshing");
+  refreshButton.setAttribute("aria-label", "Refreshing");
+  refreshButton.title = "Refreshing";
   try {
     const response = await fetch("/api/refresh", { method: "POST" });
     setStatus(await response.json());
     await loadNames();
   } finally {
     refreshButton.disabled = false;
-    refreshButton.textContent = "Refresh";
+    refreshButton.classList.remove("isRefreshing");
+    refreshButton.setAttribute("aria-label", "Refresh");
+    refreshButton.title = "Refresh";
     closeMenu();
   }
 }
