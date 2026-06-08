@@ -327,13 +327,9 @@ function renderCategoryOptions(categories) {
   );
 }
 
-function categoryRows(categories) {
-  return Object.keys(categories || {}).reduce((rows, category) => rows.concat(categories[category] || []), []);
-}
-
 function renderMonthYearOptions(categories) {
   const monthKeys = [
-    ...new Set(categoryRows(categories).map((row) => monthYearKey(row.date)).filter(Boolean)),
+    ...new Set(Object.values(categories).flat().map((row) => monthYearKey(row.date)).filter(Boolean)),
   ].sort().reverse();
 
   monthYearFilter.replaceChildren(
