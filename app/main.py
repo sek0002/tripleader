@@ -957,6 +957,8 @@ def _save_trips(trips: list[dict[str, Any]]) -> None:
 
 
 def _trip_is_archived(trip: dict[str, Any]) -> bool:
+    if trip.get("archived") is True:
+        return True
     trip_day = _trip_date(trip.get("date"))
     return trip_day is not None and trip_day < date.today()
 
@@ -1015,6 +1017,7 @@ def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = No
         "organizer": organizer,
         "members": cleaned_members,
         "pattern": pattern,
+        "archived": payload.get("archived") is True,
         "created_at": clean_scalar(payload.get("created_at")) or datetime.now(timezone.utc).isoformat(),
     }
 

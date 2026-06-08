@@ -428,6 +428,17 @@ function renderTripCard(trip) {
     renderTrips();
   });
 
+  const archiveButton = card.querySelector(".archiveTripButton");
+  if (archiveButton) {
+    archiveButton.classList.toggle("hidden", isArchivePage);
+    archiveButton.addEventListener("click", async () => {
+      trip.archived = true;
+      await saveTrip(trip);
+      trips = trips.filter((existing) => existing.id !== trip.id);
+      renderTrips();
+    });
+  }
+
   const addMember = async (name) => {
     if (!name || trip.members.includes(name)) return;
     trip.members.push(name);
