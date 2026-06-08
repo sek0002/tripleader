@@ -184,7 +184,7 @@ async function loadDefaultTransactions() {
   try {
     const response = await fetch("/api/recent-transactions?days=30");
     const payload = await response.json();
-    if (payload?.found) {
+    if (payload && payload.found) {
       renderMember(payload);
     }
   } catch (error) {
