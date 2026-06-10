@@ -42,6 +42,27 @@ function upsertEnv(text, key, value) {
   return `${text.trimEnd()}\n${line}\n`;
 }
 
+function isMuucTeamAppCookie(cookie) {
+  return /(^|\.)muuc\.teamapp\.com$/i.test(cookie.domain || "");
+}
+
+function isRootTeamAppCookie(cookie) {
+  return /(^|\.)teamapp\.com$/i.test(cookie.domain || "");
+}
+
+function mergeCookieValues(primaryCookies, allCookies) {
+  const values = new Map();
+  for (const cookie of primaryCookies) {
+    if (cookieNames.includes(cookie.name)) values.set(cookie.name, cookie.value);
+  }
+  for (const name of ["ta_auth_token", "_teamapp_session"]) {
+    if (values.has(name)) continue;
+    const cookie = allCookies.find((candidate) => candidate.name === name && isRootTeamAppCookie(candidate));
+    if (cookie) values.set(name, cookie.value);
+  }
+  return values;
+}
+
 async function firstVisible(page, selectors) {
   for (const selector of selectors) {
     const locator = page.locator(selector).first();
@@ -129,11 +150,22 @@ async function main() {
     });
 
     const cookies = await context.cookies(cookieDomains);
-    const cookieByName = new Map(cookies.map((cookie) => [cookie.name, cookie.value]));
+    const allCookies = await context.cookies();
+    const cookieByName = mergeCookieValues(cookies, allCookies);
     const foundNames = cookieNames.filter((name) => cookieByName.has(name));
+    const foundDetails = allCookies
+      .filter(
+        (cookie) =>
+          (["ta_auth_token", "_teamapp_session"].includes(cookie.name) && isRootTeamAppCookie(cookie)) ||
+          (cookie.name === "__stripe_mid" && isMuucTeamAppCookie(cookie))
+      )
+      .map((cookie) => `${cookie.name}@${cookie.domain}`)
+      .join(", ");
 
     if (!cookieByName.has("ta_auth_token") && !cookieByName.has("_teamapp_session")) {
-      throw new Error("Login did not produce the expected TeamApp auth cookies");
+      throw new Error(
+        `Login did not produce the expected TeamApp auth cookies. TeamApp cookie names seen: ${foundDetails || "none"}`
+      );
     }
 
     const cookieHeader = cookieNames.map((name) => `${name}=${cookieByName.get(name) || "PASTE_VALUE"}`).join("; ");
@@ -141,6 +173,7 @@ async function main() {
     fs.writeFileSync(envPath, updated, { encoding: "utf8", mode: 0o600 });
     fs.chmodSync(envPath, 0o600);
     console.log(`Updated TEAMAPP_COOKIE in ${envPath}. Found: ${foundNames.join(", ") || "none"}.`);
+    if (foundDetails) console.log(`Cookie sources: ${foundDetails}.`);
   } finally {
     await browser.close();
   }
