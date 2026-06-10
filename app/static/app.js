@@ -498,7 +498,11 @@ function renderPurchases() {
 
   filterEmptyState.classList.toggle("hidden", visibleRows > 0);
   if (serverRecentTransactions) {
-    serverRecentTransactions.classList.toggle("hidden", isGlobalView && visibleRows > 0);
+    if (isGlobalView) {
+      serverRecentTransactions.classList.toggle("hidden", visibleRows > 0);
+    } else {
+      serverRecentTransactions.classList.add("hidden");
+    }
   }
 }
 
