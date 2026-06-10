@@ -479,6 +479,7 @@ async function renderTripMembers(card, trip) {
   const memberList = card.querySelector(".tripMembers");
   const addMemberBar = card.querySelector(".tripMemberAddBar");
   const transactionSection = card.querySelector(".tripTransactions");
+  if (memberList.classList.contains("hidden")) return;
   memberList.replaceChildren();
   transactionSection.replaceChildren();
 
@@ -516,10 +517,7 @@ async function renderTripMembers(card, trip) {
 
     const contact = document.createElement("div");
     contact.className = "tripMemberContact hidden";
-    contact.append(
-      contactLine("Phone", detail.contact?.phone, "phone"),
-      contactLine("Email", detail.contact?.email, "email")
-    );
+    contact.append();
     nameButton.addEventListener("click", () => contact.classList.toggle("hidden"));
 
     const statuses = document.createElement("div");

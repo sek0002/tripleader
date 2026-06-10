@@ -14,11 +14,14 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=84">
+    <link rel="stylesheet" href="/static/styles.css?v=89">
   </head>
   <body data-trip-archive="{{ 'true' if archive_mode else 'false' }}">
     <main class="shell">
       <section class="toolbar">
+        <a class="toolbarLogoLink" href="https://muuc.org.au" aria-label="Open MUUC website">
+          <img class="toolbarLogo" src="/static/icons/boat-logo-192.svg" alt="MUUC">
+        </a>
         <div class="toolbarStatus">
           <h1>{{ "Archived Trips" if archive_mode else "Plan Trips" }}</h1>
           <p id="syncStatus">{{ "Past-dated dive cards are automatically archived here." if archive_mode else "Create and track planned dive cards." }}</p>
@@ -135,7 +138,7 @@
           </div>
         </div>
 
-        <div class="tripMemberAddBar">
+        <div class="tripMemberAddBar hidden">
           <button class="addMemberToggleButton" type="button" aria-expanded="false" aria-label="Add member">+</button>
           <div class="tripMemberLookup hidden">
             <div class="autocompleteWrap">
@@ -150,7 +153,7 @@
       </article>
     </template>
 
-    <script src="/static/theme.js?v=84"></script>
-    <script src="/static/trips.js?v=84"></script>
+    <script src="/static/theme.js?v=89"></script>
+    <script src="/static/trips.js?v=89"></script>
   </body>
 </html>

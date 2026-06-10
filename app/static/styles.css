@@ -69,8 +69,39 @@ body {
   z-index: 3000;
 }
 
+.toolbarLogoLink {
+  align-items: center;
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 58px;
+  justify-content: center;
+  overflow: hidden;
+  padding: 7px;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  width: 58px;
+}
+
+.toolbarLogoLink:hover,
+.toolbarLogoLink:focus {
+  border-color: var(--accent);
+  box-shadow: 0 14px 34px rgba(15, 109, 122, 0.22);
+  transform: translateY(-1px);
+}
+
+.toolbarLogo {
+  display: block;
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
 .toolbarStatus {
   min-width: 0;
+  margin-right: auto;
 }
 
 .syncStatusPanel {
