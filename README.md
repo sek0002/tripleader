@@ -22,7 +22,7 @@ Create `.env` from `.env.example` for local use:
 
 ```env
 TEAMAPP_COOKIE=...
-TEAMAPP_USERNAME=...
+TEAMAPP_EMAIL=...
 TEAMAPP_PASSWORD=...
 LOGIN_PIN=change-me
 SESSION_SECRET=replace-with-a-long-random-string
@@ -32,16 +32,17 @@ If the cookie is missing or expired, the app still serves the stored CSV data an
 
 ## Refreshing the TeamApp cookie
 
-Set `TEAMAPP_USERNAME` and `TEAMAPP_PASSWORD` in `.env`, then run:
+Set `TEAMAPP_EMAIL` and `TEAMAPP_PASSWORD` in `.env`, install the Node dependency, then run:
 
 ```bash
-.venv/bin/python scripts/update_teamapp_cookie.py
+npm install
+npm run refresh-cookie
 ```
 
 Example cron entry to refresh the cookie daily:
 
 ```cron
-15 3 * * * cd /opt/tripleader && .venv/bin/python scripts/update_teamapp_cookie.py >> /var/log/tripleader-cookie.log 2>&1
+15 3 * * * cd /opt/tripleader && npm run refresh-cookie >> /var/log/tripleader-cookie.log 2>&1
 ```
 
 ## Deploy
@@ -54,7 +55,7 @@ Set these environment variables in your host:
 
 ```env
 TEAMAPP_COOKIE=...
-TEAMAPP_USERNAME=...
+TEAMAPP_EMAIL=...
 TEAMAPP_PASSWORD=...
 LOGIN_PIN=...
 SESSION_SECRET=...

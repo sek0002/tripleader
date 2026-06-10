@@ -278,6 +278,15 @@ function closeSuggestions(suggestions) {
   suggestions.classList.add("hidden");
 }
 
+function setChildren(element, children = []) {
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
+  children.forEach((child) => {
+    element.appendChild(child);
+  });
+}
+
 function setMenuOpen(open) {
   pageMenu.classList.toggle("hidden", !open);
   menuButton.setAttribute("aria-expanded", String(open));
@@ -298,8 +307,9 @@ function renderSuggestions(input, suggestions, onPick) {
     return;
   }
 
-  suggestions.replaceChildren(
-    ...matches.slice(0, 30).map((name) => {
+  setChildren(
+    suggestions,
+    matches.slice(0, 30).map((name) => {
       const button = document.createElement("button");
       button.className = "nameSuggestion";
       button.type = "button";
@@ -319,7 +329,7 @@ function renderSuggestions(input, suggestions, onPick) {
 function pickFirstSuggestion(input, suggestions, onPick) {
   if (suggestions.classList.contains("hidden") || !suggestions.children.length) return false;
   const firstSuggestion = suggestions.querySelector(".nameSuggestion");
-  const value = firstSuggestion?.textContent?.trim() || "";
+  const value = firstSuggestion && firstSuggestion.textContent ? firstSuggestion.textContent.trim() : "";
   if (!value) return false;
   input.value = value;
   onPick(value);
@@ -328,7 +338,7 @@ function pickFirstSuggestion(input, suggestions, onPick) {
 
 function renderTrips() {
   if (countdownTimer) clearInterval(countdownTimer);
-  tripCards.replaceChildren();
+  setChildren(tripCards);
   tripEmptyState.classList.toggle("hidden", trips.length > 0);
 
   sortedTrips().forEach((trip) => renderTripCard(trip));
@@ -479,8 +489,8 @@ async function renderTripMembers(card, trip) {
   const memberList = card.querySelector(".tripMembers");
   const addMemberBar = card.querySelector(".tripMemberAddBar");
   const transactionSection = card.querySelector(".tripTransactions");
-  memberList.replaceChildren();
-  transactionSection.replaceChildren();
+  setChildren(memberList);
+  setChildren(transactionSection);
 
   const memberNames = orderedTripMembers(trip);
   const details = await Promise.all(
@@ -516,17 +526,19 @@ async function renderTripMembers(card, trip) {
 
     const contact = document.createElement("div");
     contact.className = "tripMemberContact hidden";
-    contact.append(
-      contactLine("Phone", detail.contact?.phone, "phone"),
-      contactLine("Email", detail.contact?.email, "email")
-    );
+    const contactPayload = detail.contact || {};
+    contact.appendChild(contactLine("Phone", contactPayload.phone, "phone"));
+    contact.appendChild(contactLine("Email", contactPayload.email, "email"));
     nameButton.addEventListener("click", () => contact.classList.toggle("hidden"));
 
     const statuses = document.createElement("div");
     statuses.className = "memberStatusRow tripMemberStatuses";
-    appendStatus(statuses, Boolean(detail.membership_status?.is_current), detail.membership_status?.label || "Membership", "membership");
-    appendStatus(statuses, Boolean(detail.liability_waiver_status?.is_current), detail.liability_waiver_status?.label || "Liability Waiver", "liability");
-    if (detail.hire_status?.is_current) appendStatus(statuses, true, detail.hire_status.label || "Hire", "hire");
+    const membershipStatusPayload = detail.membership_status || {};
+    const liabilityWaiverStatusPayload = detail.liability_waiver_status || {};
+    const hireStatusPayload = detail.hire_status || {};
+    appendStatus(statuses, Boolean(membershipStatusPayload.is_current), membershipStatusPayload.label || "Membership", "membership");
+    appendStatus(statuses, Boolean(liabilityWaiverStatusPayload.is_current), liabilityWaiverStatusPayload.label || "Liability Waiver", "liability");
+    if (hireStatusPayload.is_current) appendStatus(statuses, true, hireStatusPayload.label || "Hire", "hire");
     if (detail.boat_payment_status) appendStatus(statuses, Boolean(detail.boat_payment_status.is_current), detail.boat_payment_status.label, "boat");
 
     const remove = document.createElement("button");
@@ -544,27 +556,31 @@ async function renderTripMembers(card, trip) {
 
     const identity = document.createElement("div");
     identity.className = "tripMemberIdentity";
-    identity.append(nameButton, contact);
+    identity.appendChild(nameButton);
+    identity.appendChild(contact);
 
-    row.append(identity, statuses, remove);
-    memberList.append(row);
+    row.appendChild(identity);
+    row.appendChild(statuses);
+    row.appendChild(remove);
+    memberList.appendChild(row);
   });
 
-  memberList.append(addMemberBar);
-  renderTransactions(transactionSection, details.flatMap((detail) => detail.transactions || []));
+  memberList.appendChild(addMemberBar);
+  const transactions = details.reduce((rows, detail) => rows.concat(detail.transactions || []), []);
+  renderTransactions(transactionSection, transactions);
 }
 
 function appendStatus(container, isCurrent, label, type = "membership") {
   const status = document.createElement("span");
   status.className = `membershipStatus ${isCurrent ? "isCurrentMember" : "isNotCurrentMember"}`;
   status.innerHTML = statusMarkup(isCurrent, label, type);
-  container.append(status);
+  container.appendChild(status);
 }
 
 function transactionCategory(itemText) {
   const lowered = String(itemText || "").toLowerCase();
   const category = TRANSACTION_CATEGORIES.find((entry) => entry.needles.some((needle) => lowered.includes(needle)));
-  return category?.name || "";
+  return category ? category.name : "";
 }
 
 function recentTripTransactions(transactions) {
@@ -605,7 +621,7 @@ function renderTransactions(container, transactions) {
   details.append(transactionRows);
 
   const renderFilteredTransactions = () => {
-    transactionRows.replaceChildren();
+    setChildren(transactionRows);
     const query = filterInput.value.trim().toLowerCase();
     const filteredTransactions = query
       ? recentTransactions.filter((transaction) =>
