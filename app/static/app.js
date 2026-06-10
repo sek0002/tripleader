@@ -520,10 +520,10 @@ function renderMember(payload) {
 
   emptyState.classList.add("hidden");
   memberPanel.classList.remove("hidden");
-  memberInfo.open = false;
   memberName.textContent = payload.name;
   const isGlobalView = payload.scope === "global_last_week";
   memberInfo.classList.toggle("hidden", isGlobalView);
+  memberInfo.open = !isGlobalView;
   const membershipStatusPayload = payload.membership_status || {};
   const liabilityWaiverStatusPayload = payload.liability_waiver_status || {};
   const contactPayload = payload.contact || {};
