@@ -861,25 +861,6 @@ def _trip_member_transactions(name: str) -> list[dict[str, str]]:
     return rows
 
 
-SENSITIVE_TRIP_FIELD_RE = re.compile(
-    r"(leader\s*phone|secondary\s*number|health\s*(?:and|&)\s*safety)\s*[:=-]?\s*[^,;|\n\r]*",
-    re.IGNORECASE,
-)
-PHONE_LIKE_RE = re.compile(r"(?<!\d)(?:\+?61|0)?(?:[\s().-]*\d){8,}(?!\d)")
-EMAIL_RE = re.compile(r"[\w.!#$%&'*+/=?^`{|}~-]+@[\w-]+(?:\.[\w-]+)+")
-
-
-def sanitize_trip_transaction_text(value: Any) -> str:
-    text = clean_scalar(value)
-    text = SENSITIVE_TRIP_FIELD_RE.sub("", text)
-    text = EMAIL_RE.sub("[redacted]", text)
-    text = PHONE_LIKE_RE.sub("[redacted]", text)
-    text = re.sub(r"\s{2,}", " ", text)
-    text = re.sub(r"\s+([,;|])", r"\1", text)
-    text = re.sub(r"([,;|]){2,}", r"\1", text)
-    return text.strip(" ,;|-")
-
-
 def _recent_week_transactions(days: int = 7) -> dict[str, dict[str, list[dict[str, str]]]]:
     try:
         days = int(days)
@@ -957,17 +938,7 @@ def _boat_payment_status(name: str, trip_date_value: Any, boat_selected: bool) -
 def trip_member_summary(name: str, trip_date_value: Any, boat_selected: bool) -> dict[str, Any]:
     summary = member_summary(name)
     summary["boat_payment_status"] = _boat_payment_status(name, trip_date_value, boat_selected)
-    summary["contact"] = {
-        "email": "",
-        "phone": "",
-    }
-    summary["transactions"] = [
-        {
-            **transaction,
-            "items": sanitize_trip_transaction_text(transaction.get("items")),
-        }
-        for transaction in _trip_member_transactions(name)
-    ]
+    summary["transactions"] = _trip_member_transactions(name)
     return summary
 
 
