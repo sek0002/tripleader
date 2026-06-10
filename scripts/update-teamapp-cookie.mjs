@@ -10,6 +10,7 @@ const envPath = path.join(repoRoot, ".env");
 const purchasesUrl =
   process.env.TEAMAPP_PURCHASES_URL ||
   "https://muuc.teamapp.com/clubs/132307/store/purchases.json?_csv_data=v1&page=1";
+const dashboardUrl = "https://muuc.teamapp.com/clubs/132307/dashboard?_detail=v1";
 const cookieDomains = ["https://muuc.teamapp.com"];
 const cookieNames = ["ta_auth_token", "_teamapp_session", "__stripe_mid"];
 
@@ -183,8 +184,8 @@ async function main() {
       });
     }
 
-    await page.goto("https://muuc.teamapp.com", { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
-      await page.goto("https://muuc.teamapp.com", { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.goto(dashboardUrl, { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
+      await page.goto(dashboardUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
     });
     await page.goto(purchasesUrl, { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
       await page.goto(purchasesUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
