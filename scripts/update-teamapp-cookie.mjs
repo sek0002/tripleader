@@ -10,6 +10,7 @@ const envPath = path.join(repoRoot, ".env");
 const purchasesUrl =
   process.env.TEAMAPP_PURCHASES_URL ||
   "https://muuc.teamapp.com/clubs/132307/store/purchases.json?_csv_data=v1&page=1";
+const loginUrl = "https://www.teamapp.com/user_session/new?_detail=v1";
 const dashboardUrl = "https://muuc.teamapp.com/clubs/132307/dashboard?_detail=v1";
 const cookieDomains = ["https://muuc.teamapp.com"];
 const cookieNames = ["ta_auth_token", "_teamapp_session", "__stripe_mid"];
@@ -116,9 +117,15 @@ async function fillLoginForm(page, email, password) {
 
   if (emailInput && !passwordInput && submit) {
     await Promise.allSettled([
-      page.waitForLoadState("networkidle", { timeout: 15000 }),
+      page.waitForURL(/user_session\/new.*token|users\/current\/clubs|dashboard|clubs/, { timeout: 20000 }),
       submit.click(),
     ]);
+    await page
+      .waitForSelector(
+        'input[type="password"], input[name="password"], input[name="user_session[password]"], input[name="user[password]"], input[id*="password" i], input[autocomplete="current-password"]',
+        { timeout: 10000 }
+      )
+      .catch(() => {});
     passwordInput = await firstVisible(page, [
       'input[type="password"]',
       'input[name="password"]',
@@ -146,9 +153,10 @@ async function fillLoginForm(page, email, password) {
 
   if (submit) {
     await Promise.allSettled([
-      page.waitForLoadState("networkidle", { timeout: 15000 }),
+      page.waitForURL(/users\/current\/clubs|dashboard|clubs/, { timeout: 20000 }),
       submit.click(),
     ]);
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   } else {
     await passwordInput.press("Enter");
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
@@ -175,13 +183,11 @@ async function main() {
   const page = await context.newPage();
 
   try {
-    await page.goto(purchasesUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.goto(loginUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
     if (await fillLoginForm(page, email, password)) {
-      await page.goto(purchasesUrl, { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
-        await page.goto(purchasesUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
-      });
+      await page.waitForTimeout(1500);
     }
 
     await page.goto(dashboardUrl, { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
