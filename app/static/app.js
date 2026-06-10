@@ -529,7 +529,7 @@ function renderMember(payload) {
   memberName.textContent = payload.name;
   const isGlobalView = payload.scope === "global_last_week";
   memberInfo.classList.toggle("hidden", isGlobalView);
-  memberInfo.open = !isGlobalView;
+  memberInfo.open = false;
   const membershipStatusPayload = payload.membership_status || {};
   const liabilityWaiverStatusPayload = payload.liability_waiver_status || {};
   const contactPayload = payload.contact || {};

@@ -583,10 +583,37 @@ function transactionCategory(itemText) {
   return category ? category.name : "";
 }
 
+function parseTransactionDate(value) {
+  const dateText = String(value || "").trim();
+  let match = dateText.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (match) {
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime();
+  }
+
+  match = dateText.match(/^(\d{4})-([A-Za-z]{3,})-(\d{1,2})/);
+  if (match) {
+    const monthIndex = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(
+      match[2].slice(0, 3).toLowerCase()
+    );
+    if (monthIndex >= 0) {
+      return new Date(Number(match[1]), monthIndex, Number(match[3])).getTime();
+    }
+  }
+
+  match = dateText.match(/^(\d{1,2})[/. -](\d{1,2})[/. -](\d{2,4})/);
+  if (match) {
+    const year = Number(match[3].length === 2 ? "20" + match[3] : match[3]);
+    return new Date(year, Number(match[2]) - 1, Number(match[1])).getTime();
+  }
+
+  const timestamp = Date.parse(dateText);
+  return Number.isNaN(timestamp) ? NaN : timestamp;
+}
+
 function recentTripTransactions(transactions) {
   const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
   return transactions.filter((transaction) => {
-    const timestamp = Date.parse(transaction.date);
+    const timestamp = parseTransactionDate(transaction.date);
     return Number.isFinite(timestamp) && timestamp >= cutoff;
   });
 }
@@ -654,7 +681,8 @@ function renderTransactions(container, transactions) {
     section.className = "panel categorySection";
     const heading = document.createElement("h3");
     heading.textContent = category;
-    section.append(heading, transactionTable(rows));
+    section.appendChild(heading);
+    section.appendChild(transactionTable(rows));
     renderedRows += rows.length;
     transactionRows.append(section);
   });
@@ -680,9 +708,9 @@ function transactionTable(transactions) {
   ["Name", "Date", "Paid", "Total", "Items"].forEach((label) => {
     const th = document.createElement("th");
     th.textContent = label;
-    headRow.append(th);
+    headRow.appendChild(th);
   });
-  thead.append(headRow);
+  thead.appendChild(headRow);
 
   const tbody = document.createElement("tbody");
   transactions.forEach((transaction) => {
@@ -690,12 +718,13 @@ function transactionTable(transactions) {
     ["name", "date", "paid", "total", "items"].forEach((key) => {
       const td = document.createElement("td");
       td.textContent = text(transaction[key]);
-      row.append(td);
+      row.appendChild(td);
     });
-    tbody.append(row);
+    tbody.appendChild(row);
   });
 
-  table.append(thead, tbody);
+  table.appendChild(thead);
+  table.appendChild(tbody);
   return table;
 }
 
