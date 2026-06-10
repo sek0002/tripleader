@@ -1051,6 +1051,7 @@ def index(request: Request):
             "last_checked_text": f"Last checked: {display_sync_time(current.get('at'))}",
             "last_checked_at": current.get("at") or "",
             "last_checked_color": freshness_color(current.get("at")),
+            "recent_categories": _recent_week_transactions(30),
         },
     )
 

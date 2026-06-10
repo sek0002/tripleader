@@ -34,6 +34,7 @@ const paidFilter = document.querySelector("#paidFilter");
 const clearFiltersButton = document.querySelector("#clearFiltersButton");
 const filterEmptyState = document.querySelector("#filterEmptyState");
 const purchaseGroups = document.querySelector("#purchaseGroups");
+const serverRecentTransactions = document.querySelector("#serverRecentTransactions");
 
 let currentMemberPayload = null;
 let availableNames = [];
@@ -492,9 +493,15 @@ function renderPurchases() {
   });
 
   filterEmptyState.classList.toggle("hidden", visibleRows > 0);
+  if (serverRecentTransactions) {
+    serverRecentTransactions.classList.toggle("hidden", isGlobalView && visibleRows > 0);
+  }
 }
 
 function renderMember(payload) {
+  if (serverRecentTransactions && payload.scope !== "global_last_week") {
+    serverRecentTransactions.classList.add("hidden");
+  }
   currentMemberPayload = payload;
   [membershipStatus, liabilityWaiverStatus, hireStatus].forEach((statusElement) => {
     statusElement.classList.remove("isCurrentMember", "isNotCurrentMember");

@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=85">
+    <link rel="stylesheet" href="/static/styles.css?v=87">
   </head>
   <body>
     <main class="shell">
@@ -64,6 +64,41 @@
       </section>
 
       <section id="emptyState" class="empty">Select a name to view emergency contact and purchase details.</section>
+
+      {% if recent_categories %}
+      <section id="serverRecentTransactions" class="panel categorySection">
+        <h2>Recent transactions</h2>
+        {% for category, rows in recent_categories.items() %}
+          {% if rows %}
+          <section class="categorySection">
+            <h3>{{ category }}</h3>
+            <table class="searchTransactionTable hasNameColumn">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Date</th>
+                  <th>Paid</th>
+                  <th>Total</th>
+                  <th>Items</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in rows %}
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.date }}</td>
+                  <td><span class="paidBadge {{ 'paidYes' if row.paid|string|upper == 'YES' else 'paidNo' }}">{{ row.paid }}</span></td>
+                  <td>{{ row.total }}</td>
+                  <td>{{ row.items }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </section>
+          {% endif %}
+        {% endfor %}
+      </section>
+      {% endif %}
 
       <section id="memberPanel" class="hidden">
         <div class="panel">
@@ -170,7 +205,7 @@
       </section>
     </main>
 
-    <script src="/static/theme.js?v=85"></script>
-    <script src="/static/app.js?v=85"></script>
+    <script src="/static/theme.js?v=87"></script>
+    <script src="/static/app.js?v=87"></script>
   </body>
 </html>
