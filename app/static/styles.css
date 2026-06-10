@@ -1121,6 +1121,12 @@ td:nth-child(3) {
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto;
+  position: relative;
+  z-index: 6000;
+}
+
+.tripCard--menuOpen {
+  z-index: 6500;
 }
 
 .tripTitleLine {
@@ -1233,10 +1239,6 @@ td:nth-child(3) {
   right: 0;
   top: calc(100% + 8px);
   z-index: 5200;
-}
-
-.pinWrap:has(.pinMenu:not(.hidden)) {
-  z-index: 5600;
 }
 
 .deleteTripButton {

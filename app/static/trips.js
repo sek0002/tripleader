@@ -433,7 +433,9 @@ function renderTripCard(trip) {
 
   pinButton.addEventListener("click", () => {
     pinMenu.classList.toggle("hidden");
-    pinButton.setAttribute("aria-expanded", String(!pinMenu.classList.contains("hidden")));
+    const isOpen = !pinMenu.classList.contains("hidden");
+    card.classList.toggle("tripCard--menuOpen", isOpen);
+    pinButton.setAttribute("aria-expanded", String(isOpen));
   });
 
   card.querySelector(".deleteTripButton").addEventListener("click", async () => {
@@ -810,7 +812,11 @@ document.addEventListener("click", (event) => {
     closeMenu();
   }
   document.querySelectorAll(".pinMenu").forEach((menu) => {
-    if (!menu.closest(".pinWrap").contains(event.target)) menu.classList.add("hidden");
+    if (!menu.closest(".pinWrap").contains(event.target)) {
+      menu.classList.add("hidden");
+      const card = menu.closest(".tripCard");
+      if (card) card.classList.remove("tripCard--menuOpen");
+    }
   });
   document.querySelectorAll(".nameSuggestions").forEach((suggestions) => {
     if (!suggestions.closest(".autocompleteWrap").contains(event.target)) closeSuggestions(suggestions);

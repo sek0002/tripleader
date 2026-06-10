@@ -121,6 +121,13 @@ async function main() {
       });
     }
 
+    await page.goto("https://muuc.teamapp.com", { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
+      await page.goto("https://muuc.teamapp.com", { waitUntil: "domcontentloaded", timeout: 30000 });
+    });
+    await page.goto(purchasesUrl, { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
+      await page.goto(purchasesUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+    });
+
     const cookies = await context.cookies(cookieDomains);
     const cookieByName = new Map(cookies.map((cookie) => [cookie.name, cookie.value]));
     const foundNames = cookieNames.filter((name) => cookieByName.has(name));
