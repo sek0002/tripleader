@@ -10,6 +10,7 @@ const envPath = path.join(repoRoot, ".env");
 const purchasesUrl =
   process.env.TEAMAPP_PURCHASES_URL ||
   "https://muuc.teamapp.com/clubs/132307/store/purchases.json?_csv_data=v1&page=1";
+const cookieDomains = ["https://muuc.teamapp.com"];
 
 function parseEnv(text) {
   const values = {};
@@ -119,7 +120,7 @@ async function main() {
       });
     }
 
-    const cookies = await context.cookies(["https://muuc.teamapp.com", "https://www.teamapp.com"]);
+    const cookies = await context.cookies(cookieDomains);
     const wanted = cookies.filter((cookie) =>
       ["ta_auth_token", "_teamapp_session", "__stripe_mid"].includes(cookie.name),
     );
