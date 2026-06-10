@@ -40,6 +40,7 @@ let currentMemberPayload = null;
 let availableNames = [];
 let tableSorts = {};
 let memberSearchSequence = 0;
+let memberSearchActive = false;
 const FRESHNESS_WINDOW_MS = 15 * 60 * 1000;
 const initialLastCheckedAt = lastCheckedStatus && lastCheckedStatus.dataset ? lastCheckedStatus.dataset.lastCheckedAt || "" : "";
 const initialLastCheckedAtMs = initialLastCheckedAt ? Date.parse(initialLastCheckedAt) : NaN;
@@ -186,6 +187,7 @@ async function loadDefaultTransactions(force = false) {
   try {
     const response = await fetch("/api/recent-transactions?days=30");
     const payload = await response.json();
+    if (!force && memberSearchActive) return;
     if (!force && searchSequence !== memberSearchSequence) return;
     if (payload && payload.found) {
       renderMember(payload);
@@ -583,6 +585,7 @@ function renderMember(payload) {
 async function searchMember() {
   const name = nameInput.value.trim();
   if (!name) return;
+  memberSearchActive = true;
   const searchSequence = (memberSearchSequence += 1);
   if (serverRecentTransactions) {
     serverRecentTransactions.classList.add("hidden");
@@ -618,7 +621,10 @@ document.addEventListener("keydown", (event) => {
 });
 refreshButton.addEventListener("click", refreshStore);
 searchButton.addEventListener("click", searchMember);
-recentTransactionsButton.addEventListener("click", () => loadDefaultTransactions(true));
+recentTransactionsButton.addEventListener("click", () => {
+  memberSearchActive = false;
+  loadDefaultTransactions(true);
+});
 purchaseSearchInput.addEventListener("input", renderPurchases);
 categoryFilter.addEventListener("change", renderPurchases);
 monthYearFilter.addEventListener("change", renderPurchases);

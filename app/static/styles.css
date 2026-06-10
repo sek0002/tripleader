@@ -1204,6 +1204,7 @@ td:nth-child(3) {
 .pinWrap {
   position: relative;
   align-self: start;
+  z-index: 5000;
 }
 
 .pinButton {
@@ -1231,7 +1232,11 @@ td:nth-child(3) {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  z-index: 20;
+  z-index: 5200;
+}
+
+.pinWrap:has(.pinMenu:not(.hidden)) {
+  z-index: 5600;
 }
 
 .deleteTripButton {
