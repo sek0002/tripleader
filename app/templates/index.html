@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=87">
+    <link rel="stylesheet" href="/static/styles.css?v=88">
   </head>
   <body>
     <main class="shell">
@@ -85,11 +85,11 @@
               <tbody>
                 {% for row in rows %}
                 <tr>
-                  <td>{{ row.name }}</td>
-                  <td>{{ row.date }}</td>
-                  <td><span class="paidBadge {{ 'paidYes' if row.paid|string|upper == 'YES' else 'paidNo' }}">{{ row.paid }}</span></td>
-                  <td>{{ row.total }}</td>
-                  <td>{{ row.items }}</td>
+                  <td>{{ row["name"] }}</td>
+                  <td>{{ row["date"] }}</td>
+                  <td><span class="paidBadge {{ 'paidYes' if row["paid"]|string|upper == 'YES' else 'paidNo' }}">{{ row["paid"] }}</span></td>
+                  <td>{{ row["total"] }}</td>
+                  <td>{{ row["items"] }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -205,7 +205,7 @@
       </section>
     </main>
 
-    <script src="/static/theme.js?v=87"></script>
-    <script src="/static/app.js?v=87"></script>
+    <script src="/static/theme.js?v=88"></script>
+    <script src="/static/app.js?v=88"></script>
   </body>
 </html>
