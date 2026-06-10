@@ -103,10 +103,10 @@ async function copyText(value, button) {
     textarea.setAttribute("readonly", "");
     textarea.style.position = "fixed";
     textarea.style.opacity = "0";
-    document.body.append(textarea);
+    document.body.appendChild(textarea);
     textarea.select();
     document.execCommand("copy");
-    textarea.remove();
+    textarea.parentNode.removeChild(textarea);
   }
 
   if (!button) return;
@@ -361,9 +361,17 @@ function categoryRows(categories) {
 }
 
 function renderMonthYearOptions(categories) {
-  const monthKeys = [
-    ...new Set(categoryRows(categories).map((row) => monthYearKey(row.date)).filter(Boolean)),
-  ].sort().reverse();
+  const seenMonthKeys = {};
+  const monthKeys = categoryRows(categories)
+    .map((row) => monthYearKey(row.date))
+    .filter(Boolean)
+    .filter((key) => {
+      if (seenMonthKeys[key]) return false;
+      seenMonthKeys[key] = true;
+      return true;
+    })
+    .sort()
+    .reverse();
 
   const options = [
     Object.assign(document.createElement("option"), {
@@ -393,7 +401,7 @@ function renderTableHead(category) {
   const activeSort = tableSorts[category];
   const isGlobalView = currentMemberPayload && currentMemberPayload.scope === "global_last_week";
   const columns = isGlobalView
-    ? [{ key: "name", label: "Name", firstDirection: "asc" }, ...sortableColumns]
+    ? [{ key: "name", label: "Name", firstDirection: "asc" }].concat(sortableColumns)
     : sortableColumns;
 
   columns.forEach((column) => {
@@ -420,11 +428,11 @@ function renderTableHead(category) {
       renderPurchases();
     });
 
-    th.append(button);
-    tr.append(th);
+    th.appendChild(button);
+    tr.appendChild(th);
   });
 
-  thead.append(tr);
+  thead.appendChild(tr);
   return thead;
 }
 
@@ -448,12 +456,13 @@ function renderPurchases() {
 
     const heading = document.createElement("h3");
     heading.textContent = category;
-    section.append(heading);
+    section.appendChild(heading);
 
     const table = document.createElement("table");
     table.classList.add("searchTransactionTable");
     table.classList.toggle("hasNameColumn", isGlobalView);
-    table.append(renderTableHead(category), document.createElement("tbody"));
+    table.appendChild(renderTableHead(category));
+    table.appendChild(document.createElement("tbody"));
     const tbody = table.querySelector("tbody");
     rows.forEach((row) => {
       const tr = document.createElement("tr");
@@ -462,17 +471,24 @@ function renderPurchases() {
       paidBadge.className = `paidBadge ${paidClass(row.paid)}`;
       paidBadge.textContent = text(row.paid);
 
-      paidCell.append(paidBadge);
+      paidCell.appendChild(paidBadge);
       if (isGlobalView) {
-        tr.append(tableCell(row.name), tableCell(row.date), paidCell, tableCell(row.total), tableCell(row.items));
+        tr.appendChild(tableCell(row.name));
+        tr.appendChild(tableCell(row.date));
+        tr.appendChild(paidCell);
+        tr.appendChild(tableCell(row.total));
+        tr.appendChild(tableCell(row.items));
       } else {
-        tr.append(tableCell(row.date), paidCell, tableCell(row.total), tableCell(row.items));
+        tr.appendChild(tableCell(row.date));
+        tr.appendChild(paidCell);
+        tr.appendChild(tableCell(row.total));
+        tr.appendChild(tableCell(row.items));
       }
-      tbody.append(tr);
+      tbody.appendChild(tr);
       visibleRows += 1;
     });
-    section.append(table);
-    purchaseGroups.append(section);
+    section.appendChild(table);
+    purchaseGroups.appendChild(section);
   });
 
   filterEmptyState.classList.toggle("hidden", visibleRows > 0);
