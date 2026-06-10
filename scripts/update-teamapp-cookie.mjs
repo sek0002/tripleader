@@ -11,6 +11,7 @@ const purchasesUrl =
   process.env.TEAMAPP_PURCHASES_URL ||
   "https://muuc.teamapp.com/clubs/132307/store/purchases.json?_csv_data=v1&page=1";
 const cookieDomains = ["https://muuc.teamapp.com"];
+const cookieNames = ["ta_auth_token", "_teamapp_session", "__stripe_mid"];
 
 function parseEnv(text) {
   const values = {};
@@ -121,15 +122,16 @@ async function main() {
     }
 
     const cookies = await context.cookies(cookieDomains);
-    const wanted = cookies.filter((cookie) =>
-      ["ta_auth_token", "_teamapp_session", "__stripe_mid"].includes(cookie.name),
-    );
+    const cookieByName = new Map(cookies.map((cookie) => [cookie.name, cookie.value]));
+    const wanted = cookieNames
+      .map((name) => ({ name, value: cookieByName.get(name) || "PASTE_VALUE" }))
+      .filter((cookie) => cookie.value !== "PASTE_VALUE" || cookie.name === "__stripe_mid");
 
-    if (!wanted.some((cookie) => cookie.name === "ta_auth_token") && !wanted.some((cookie) => cookie.name === "_teamapp_session")) {
+    if (!cookieByName.has("ta_auth_token") && !cookieByName.has("_teamapp_session")) {
       throw new Error("Login did not produce the expected TeamApp auth cookies");
     }
 
-    const cookieHeader = wanted.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
+    const cookieHeader = cookieNames.map((name) => `${name}=${cookieByName.get(name) || "PASTE_VALUE"}`).join("; ");
     const updated = upsertEnv(envText, "TEAMAPP_COOKIE", cookieHeader);
     fs.writeFileSync(envPath, updated, { encoding: "utf8", mode: 0o600 });
     fs.chmodSync(envPath, 0o600);
