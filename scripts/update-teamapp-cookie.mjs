@@ -75,32 +75,73 @@ async function fillLoginForm(page, email, password) {
   const emailInput = await firstVisible(page, [
     'input[type="email"]',
     'input[name="email"]',
+    'input[name="login"]',
+    'input[name="user_session[email]"]',
+    'input[name="user_session[login]"]',
     'input[name="user[email]"]',
     'input[id*="email" i]',
+    'input[id*="login" i]',
     'input[autocomplete="email"]',
+    'input[autocomplete="username"]',
   ]);
-  const passwordInput = await firstVisible(page, [
+  let passwordInput = await firstVisible(page, [
     'input[type="password"]',
     'input[name="password"]',
+    'input[name="user_session[password]"]',
     'input[name="user[password]"]',
     'input[id*="password" i]',
     'input[autocomplete="current-password"]',
   ]);
 
-  if (!emailInput || !passwordInput) return false;
+  if (!emailInput && !passwordInput) return false;
 
-  await emailInput.fill(email);
-  await passwordInput.fill(password);
+  if (emailInput) {
+    await emailInput.fill(email);
+  }
 
-  const submit = await firstVisible(page, [
+  let submit = await firstVisible(page, [
     'button[type="submit"]',
     'input[type="submit"]',
     'button:has-text("Log in")',
     'button:has-text("Login")',
+    'button:has-text("Next")',
+    'button:has-text("Continue")',
     'button:has-text("Sign in")',
     'input[value*="Log" i]',
+    'input[value*="Next" i]',
+    'input[value*="Continue" i]',
     'input[value*="Sign" i]',
   ]);
+
+  if (emailInput && !passwordInput && submit) {
+    await Promise.allSettled([
+      page.waitForLoadState("networkidle", { timeout: 15000 }),
+      submit.click(),
+    ]);
+    passwordInput = await firstVisible(page, [
+      'input[type="password"]',
+      'input[name="password"]',
+      'input[name="user_session[password]"]',
+      'input[name="user[password]"]',
+      'input[id*="password" i]',
+      'input[autocomplete="current-password"]',
+    ]);
+    submit = await firstVisible(page, [
+      'button[type="submit"]',
+      'input[type="submit"]',
+      'button:has-text("Log in")',
+      'button:has-text("Login")',
+      'button:has-text("Continue")',
+      'button:has-text("Sign in")',
+      'input[value*="Log" i]',
+      'input[value*="Continue" i]',
+      'input[value*="Sign" i]',
+    ]);
+  }
+
+  if (!passwordInput) return Boolean(emailInput);
+
+  await passwordInput.fill(password);
 
   if (submit) {
     await Promise.allSettled([
