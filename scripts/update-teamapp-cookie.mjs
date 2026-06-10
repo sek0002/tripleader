@@ -123,9 +123,7 @@ async function main() {
 
     const cookies = await context.cookies(cookieDomains);
     const cookieByName = new Map(cookies.map((cookie) => [cookie.name, cookie.value]));
-    const wanted = cookieNames
-      .map((name) => ({ name, value: cookieByName.get(name) || "PASTE_VALUE" }))
-      .filter((cookie) => cookie.value !== "PASTE_VALUE" || cookie.name === "__stripe_mid");
+    const foundNames = cookieNames.filter((name) => cookieByName.has(name));
 
     if (!cookieByName.has("ta_auth_token") && !cookieByName.has("_teamapp_session")) {
       throw new Error("Login did not produce the expected TeamApp auth cookies");
@@ -135,7 +133,7 @@ async function main() {
     const updated = upsertEnv(envText, "TEAMAPP_COOKIE", cookieHeader);
     fs.writeFileSync(envPath, updated, { encoding: "utf8", mode: 0o600 });
     fs.chmodSync(envPath, 0o600);
-    console.log(`Updated TEAMAPP_COOKIE in ${envPath} (${wanted.length} cookies).`);
+    console.log(`Updated TEAMAPP_COOKIE in ${envPath}. Found: ${foundNames.join(", ") || "none"}.`);
   } finally {
     await browser.close();
   }
