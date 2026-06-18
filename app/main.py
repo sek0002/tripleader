@@ -1089,6 +1089,7 @@ def _clean_trip_payload(payload: dict[str, Any], existing_id: Optional[str] = No
         "trip_type": trip_type,
         "organizer": organizer,
         "members": cleaned_members,
+        "comment": clean_scalar(payload.get("comment")),
         "pattern": pattern,
         "archived": payload.get("archived") is True,
         "created_at": clean_scalar(payload.get("created_at")) or datetime.now(timezone.utc).isoformat(),

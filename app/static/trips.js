@@ -17,6 +17,7 @@ let availableNames = [];
 let trips = [];
 let tripSortDirection = "asc";
 let countdownTimer = null;
+const tripCommentSaveTimers = new Map();
 const DEFAULT_TRIP_TITLE = "Name Your Trip";
 const copiedIcon =
   '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8.5-8.5 1.4 1.4-9.9 9.9Z" fill="currentColor"></path></svg>';
@@ -369,6 +370,7 @@ function renderTripCard(trip) {
   const memberLookup = card.querySelector(".tripMemberLookup");
   const memberInput = card.querySelector(".tripMemberInput");
   const suggestions = card.querySelector(".tripMemberLookup .nameSuggestions");
+  const tripCommentInput = card.querySelector(".tripCommentInput");
 
   applyTripPattern(card, trip);
   titleInput.value = trip.title || "Name Your Trip";
@@ -376,7 +378,22 @@ function renderTripCard(trip) {
   trip.trip_type = normalizeTripType(trip.trip_type) || (isBoatTrip(trip) ? "Boat" : "Other");
   typeInput.value = trip.trip_type;
   organizerInput.value = trip.organizer || "";
+  tripCommentInput.value = trip.comment || "";
   countdown.dataset.tripDate = trip.date || "";
+
+  tripCommentInput.addEventListener("input", () => {
+    trip.comment = tripCommentInput.value;
+    if (tripCommentSaveTimers.has(trip.id)) {
+      window.clearTimeout(tripCommentSaveTimers.get(trip.id));
+    }
+    tripCommentSaveTimers.set(
+      trip.id,
+      window.setTimeout(async () => {
+        await saveTrip(trip);
+        tripCommentSaveTimers.delete(trip.id);
+      }, 350)
+    );
+  });
 
   titleInput.addEventListener("change", async () => {
     trip.title = ensureTitleHasType(titleInput.value, trip.trip_type);
@@ -769,6 +786,7 @@ if (createTripButton) {
         title: ensureTitleHasType(tripTitleInput.value, tripType),
       trip_type: tripType,
       organizer: tripOrganizerInput.value.trim(),
+      comment: "",
       pattern: randomTripPattern(),
       members: [],
     }),

@@ -1428,6 +1428,11 @@ td:nth-child(3) {
   display: none;
 }
 
+.tripCommentPanel {
+  display: grid;
+  gap: 6px;
+}
+
 .tripMemberStatuses {
   grid-column: 1;
   margin: 0;
