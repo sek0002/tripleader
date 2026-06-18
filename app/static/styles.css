@@ -340,6 +340,14 @@ button:disabled {
   margin-top: 16px;
 }
 
+.memberCommentPanel {
+  margin: 4px 0 16px;
+}
+
+.memberCommentPanel label {
+  margin-bottom: 6px;
+}
+
 .memberInfoSummary {
   background: var(--secondary);
   border: 1px solid var(--line);
@@ -384,6 +392,10 @@ button:disabled {
   color: var(--red);
 }
 
+.membershipStatus.isCommented {
+  color: var(--accent);
+}
+
 .membershipIcon {
   align-items: center;
   display: inline-flex;
@@ -421,6 +433,30 @@ button:disabled {
   gap: 1px;
   line-height: 1;
   position: relative;
+}
+
+.statusBadgeButton {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  min-height: 0;
+  padding: 0;
+}
+
+.statusBadgeButton:hover,
+.statusBadgeButton:focus {
+  background: transparent;
+  color: inherit;
+}
+
+.statusBadgeButton:focus-visible {
+  outline: 3px solid rgba(15, 109, 122, 0.24);
+  outline-offset: 4px;
+}
+
+.statusBadgeWrap--override .statusBadge {
+  border-style: dashed;
 }
 
 .statusBadgeWrap::after {
@@ -469,7 +505,8 @@ button:disabled {
 
 .statusBadge--membership svg,
 .statusBadge--liability svg,
-.statusBadge--hire svg {
+.statusBadge--hire svg,
+.statusBadge--comment svg {
   display: block;
   height: 17px;
   width: 17px;
@@ -591,6 +628,18 @@ input {
   width: 100%;
 }
 
+textarea {
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 86px;
+  padding: 10px 12px;
+  resize: vertical;
+  width: 100%;
+}
+
 select {
   appearance: none;
   background: var(--field);
@@ -614,6 +663,11 @@ input:focus::-webkit-input-placeholder {
 }
 
 input:focus {
+  border-color: var(--accent);
+  outline: 3px solid rgba(15, 109, 122, 0.14);
+}
+
+textarea:focus {
   border-color: var(--accent);
   outline: 3px solid rgba(15, 109, 122, 0.14);
 }

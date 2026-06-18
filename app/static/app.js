@@ -21,6 +21,9 @@ const memberName = document.querySelector("#memberName");
 const membershipStatus = document.querySelector("#membershipStatus");
 const liabilityWaiverStatus = document.querySelector("#liabilityWaiverStatus");
 const hireStatus = document.querySelector("#hireStatus");
+const commentStatus = document.querySelector("#commentStatus");
+const memberCommentPanel = document.querySelector("#memberCommentPanel");
+const memberCommentInput = document.querySelector("#memberCommentInput");
 const memberEmail = document.querySelector("#memberEmail");
 const memberPhone = document.querySelector("#memberPhone");
 const emergencyName = document.querySelector("#emergencyName");
@@ -41,6 +44,7 @@ let availableNames = [];
 let tableSorts = {};
 let memberSearchSequence = 0;
 let memberSearchActive = false;
+let memberCommentSaveTimer = null;
 const FRESHNESS_WINDOW_MS = 15 * 60 * 1000;
 const initialLastCheckedAt = lastCheckedStatus && lastCheckedStatus.dataset ? lastCheckedStatus.dataset.lastCheckedAt || "" : "";
 const initialLastCheckedAtMs = initialLastCheckedAt ? Date.parse(initialLastCheckedAt) : NaN;
@@ -132,19 +136,91 @@ function escapeAttribute(value) {
     .replace(/>/g, "&gt;");
 }
 
-function statusMarkup(isCurrent, label, type = "membership") {
+function getMembershipOverride(name) {
+  if (!currentMemberPayload || currentMemberPayload.name !== name) return null;
+  const savedData = currentMemberPayload.saved_member_data || {};
+  const override = savedData.membership_override;
+  return override && typeof override === "object" ? override : null;
+}
+
+function getMemberComment(name) {
+  if (!currentMemberPayload || currentMemberPayload.name !== name) return "";
+  const savedData = currentMemberPayload.saved_member_data || {};
+  return String(savedData.comment || "");
+}
+
+async function saveMemberData(name, changes) {
+  const response = await fetch(`/api/member/${encodeURIComponent(name)}/saved-data`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(changes),
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
+async function setMembershipOverride(name, isCurrent) {
+  const savedData = await saveMemberData(name, {
+    membership_override: {
+      is_current: Boolean(isCurrent),
+    },
+  });
+  if (!savedData || !currentMemberPayload || currentMemberPayload.name !== name) return;
+  currentMemberPayload.saved_member_data = savedData;
+  renderMember(currentMemberPayload);
+}
+
+function setMemberComment(name, comment) {
+  if (!currentMemberPayload || currentMemberPayload.name !== name) return;
+  currentMemberPayload.saved_member_data = currentMemberPayload.saved_member_data || {};
+  currentMemberPayload.saved_member_data.comment = String(comment || "").trim();
+  if (memberCommentSaveTimer) window.clearTimeout(memberCommentSaveTimer);
+  memberCommentSaveTimer = window.setTimeout(async () => {
+    const savedData = await saveMemberData(name, { comment });
+    if (!savedData || !currentMemberPayload || currentMemberPayload.name !== name) return;
+    currentMemberPayload.saved_member_data = savedData;
+    renderCommentStatus(currentMemberPayload, false);
+  }, 250);
+}
+
+function membershipStatusForPayload(payload, membershipStatusPayload) {
+  const override = getMembershipOverride(payload.name);
+  if (!override) {
+    return {
+      isCurrent: Boolean(membershipStatusPayload.is_current),
+      label: membershipStatusPayload.label || "Membership",
+      isOverride: false,
+    };
+  }
+
+  const overrideText = override.is_current ? "Member" : "Not member";
+  return {
+    isCurrent: Boolean(override.is_current),
+    label: `Membership manually set: ${overrideText}`,
+    isOverride: true,
+  };
+}
+
+function statusMarkup(isCurrent, label, type = "membership", options = {}) {
   const visible = type === "boat"
     ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 13.2 6.4 7.8h6.9l4.2 5.4H20l-1.7 4.1c-.8.4-1.6.6-2.4.6-1 0-1.8-.3-2.6-.8-.8.5-1.6.8-2.6.8s-1.8-.3-2.6-.8c-.8.5-1.6.8-2.6.8-.7 0-1.4-.2-2.1-.5L2 13.2h2Zm3.7-1.4h7.4l-2.4-3.1H9.1l-1.4 3.1Z" fill="currentColor"></path></svg>'
+    : type === "comment"
+      ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M11 5h2v9h-2V5Zm0 11h2v2h-2v-2Z" fill="currentColor"></path></svg>'
     : type === "membership"
       ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M5 6.2c0-1 .8-1.8 1.8-1.8h10.4c1 0 1.8.8 1.8 1.8v11.6c0 1-.8 1.8-1.8 1.8H6.8c-1 0-1.8-.8-1.8-1.8V6.2Zm3.2 3.1h7.6V7.8H8.2v1.5Zm0 3.2h7.6V11H8.2v1.5Zm0 3.2h4.9v-1.5H8.2v1.5Z" fill="currentColor"></path></svg>'
       : type === "liability"
         ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M7 3.8h7.8L19 8v12.2H7V3.8Zm7 1.9v3h3L14 5.7ZM9 11h8V9.6H9V11Zm0 3.2h8v-1.4H9v1.4Zm0 3.2h5.5V16H9v1.4Z" fill="currentColor"></path></svg>'
         : '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M9 4.8h6v2.1h1.4v2H15v10.3c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2V8.9H7.6v-2H9V4.8Zm1.8 0v2.1h2.4V4.8h-2.4Zm-.1 4.1v10.3c0 .2.1.3.3.3h2c.2 0 .3-.1.3-.3V8.9h-2.6Zm6.9 1.1h1.8v5.6h-1.8V10Z" fill="currentColor"></path></svg>';
-  const caption = type === "boat" && !isCurrent ? "overdue" : type === "membership" ? "Member" : type === "liability" ? "Liability" : type === "hire" ? "Gear" : "";
+  const caption = type === "boat" && !isCurrent ? "overdue" : type === "membership" ? "Member" : type === "liability" ? "Liability" : type === "hire" ? "Gear" : type === "comment" ? "Note" : "";
   const captionText = caption ? `<small class="statusBadgeCaption">${caption}</small>` : "";
   const title = label;
   const safeTitle = escapeAttribute(title);
-  return `<span class="statusBadgeWrap" title="${safeTitle}" data-tooltip="${safeTitle}" aria-label="${safeTitle}" tabindex="0"><span class="statusBadge statusBadge--${type}" aria-hidden="true">${visible}</span>${captionText}</span>`;
+  const classes = `statusBadgeWrap${options.button ? " statusBadgeButton" : ""}${options.isOverride ? " statusBadgeWrap--override" : ""}`;
+  if (options.button) {
+    const safeAction = escapeAttribute(options.actionLabel || safeTitle);
+    return `<button class="${classes}" type="button" title="${safeTitle}" data-tooltip="${safeTitle}" aria-label="${safeAction}"><span class="statusBadge statusBadge--${type}" aria-hidden="true">${visible}</span>${captionText}</button>`;
+  }
+  return `<span class="${classes}" title="${safeTitle}" data-tooltip="${safeTitle}" aria-label="${safeTitle}" tabindex="0"><span class="statusBadge statusBadge--${type}" aria-hidden="true">${visible}</span>${captionText}</span>`;
 }
 
 function setStatus(payload) {
@@ -506,19 +582,37 @@ function renderPurchases() {
   }
 }
 
+function renderCommentStatus(payload, syncInput = true) {
+  if (!commentStatus || !memberCommentPanel || !memberCommentInput) return;
+  const isGlobalView = payload.scope === "global_last_week";
+  const comment = getMemberComment(payload.name);
+  memberCommentPanel.classList.toggle("hidden", isGlobalView);
+  if (syncInput) {
+    memberCommentInput.value = comment;
+  }
+  commentStatus.classList.toggle("hidden", isGlobalView || !comment);
+  commentStatus.classList.toggle("isCommented", Boolean(comment));
+  commentStatus.innerHTML = comment ? statusMarkup(true, "Comment saved", "comment") : "";
+}
+
 function renderMember(payload) {
   if (serverRecentTransactions && payload.scope !== "global_last_week") {
     serverRecentTransactions.classList.add("hidden");
   }
   currentMemberPayload = payload;
-  [membershipStatus, liabilityWaiverStatus, hireStatus].forEach((statusElement) => {
+  [membershipStatus, liabilityWaiverStatus, hireStatus, commentStatus].forEach((statusElement) => {
     statusElement.classList.remove("isCurrentMember", "isNotCurrentMember");
     statusElement.innerHTML = "";
   });
   hireStatus.classList.add("hidden");
+  if (commentStatus) {
+    commentStatus.classList.add("hidden");
+    commentStatus.classList.remove("isCommented");
+  }
 
   if (!payload.found) {
     memberPanel.classList.add("hidden");
+    if (memberCommentPanel) memberCommentPanel.classList.add("hidden");
     emptyState.classList.remove("hidden");
     emptyState.textContent = "No exact member match found. Pick a name from the suggestions.";
     return;
@@ -535,7 +629,9 @@ function renderMember(payload) {
   const contactPayload = payload.contact || {};
   const emergencyPayload = payload.emergency || {};
   const hireStatusPayload = payload.hire_status || {};
-  const isCurrentMember = Boolean(membershipStatusPayload.is_current);
+  renderCommentStatus(payload);
+  const membershipViewStatus = membershipStatusForPayload(payload, membershipStatusPayload);
+  const isCurrentMember = membershipViewStatus.isCurrent;
   if (isGlobalView) {
     membershipStatus.classList.add("hidden");
     liabilityWaiverStatus.classList.add("hidden");
@@ -546,9 +642,20 @@ function renderMember(payload) {
     membershipStatus.classList.toggle("isNotCurrentMember", !isCurrentMember);
     membershipStatus.innerHTML = statusMarkup(
       isCurrentMember,
-      membershipStatusPayload.label || "Membership",
-      "membership"
+      membershipViewStatus.label,
+      "membership",
+      {
+        button: true,
+        isOverride: membershipViewStatus.isOverride,
+        actionLabel: `${membershipViewStatus.label}. Click to toggle membership status.`,
+      }
     );
+    const membershipButton = membershipStatus.querySelector(".statusBadgeButton");
+    if (membershipButton) {
+      membershipButton.addEventListener("click", () => {
+        setMembershipOverride(payload.name, !isCurrentMember);
+      });
+    }
   }
   const hasCurrentLiabilityWaiver = Boolean(liabilityWaiverStatusPayload.is_current);
   if (!isGlobalView) {
@@ -646,6 +753,13 @@ document.querySelectorAll("[data-copy-target]").forEach((button) => {
     copyText(target ? target.textContent : "", button);
   });
 });
+if (memberCommentInput) {
+  memberCommentInput.addEventListener("input", () => {
+    if (!currentMemberPayload || !currentMemberPayload.found || currentMemberPayload.scope === "global_last_week") return;
+    setMemberComment(currentMemberPayload.name, memberCommentInput.value);
+    renderCommentStatus(currentMemberPayload, false);
+  });
+}
 nameInput.addEventListener("input", renderNameSuggestions);
 nameInput.addEventListener("change", searchMember);
 nameInput.addEventListener("keydown", (event) => {

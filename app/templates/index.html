@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=98">
+    <link rel="stylesheet" href="/static/styles.css?v=101">
   </head>
   <body>
     <main class="shell">
@@ -109,6 +109,11 @@
             <span id="membershipStatus" class="membershipStatus" aria-live="polite"></span>
             <span id="liabilityWaiverStatus" class="membershipStatus" aria-live="polite"></span>
             <span id="hireStatus" class="membershipStatus hidden" aria-live="polite"></span>
+            <span id="commentStatus" class="membershipStatus hidden" aria-live="polite"></span>
+          </div>
+          <div id="memberCommentPanel" class="memberCommentPanel hidden">
+            <label for="memberCommentInput">Comments</label>
+            <textarea id="memberCommentInput" rows="3" placeholder="Add a comment to this member"></textarea>
           </div>
           <details id="memberInfo" class="memberInfo">
             <summary class="memberInfoSummary">Member information</summary>
@@ -206,6 +211,6 @@
     </main>
 
     <script src="/static/theme.js?v=98"></script>
-    <script src="/static/app.js?v=98"></script>
+    <script src="/static/app.js?v=101"></script>
   </body>
 </html>

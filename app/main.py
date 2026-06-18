@@ -28,6 +28,7 @@ STORE_PATH = BASE_DIR / "purchases.csv"
 LEGACY_PURCHASES_PATH = DATA_DIR / "purchases.csv"
 SYNC_STATE_PATH = BASE_DIR / "purchases.sync.json"
 TRIPS_PATH = BASE_DIR / "trips.json"
+MEMBER_DATA_PATH = BASE_DIR / "member-data.json"
 TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json"
 TEAMAPP_PAGE_PARAM = "page"
 TEAMAPP_PAGE_RANGE = range(1, 7)
@@ -74,6 +75,7 @@ DEDUPLICATION_COLUMNS = ["purchase_id", "items"]
 load_dotenv(BASE_DIR / ".env")
 sync_lock = threading.Lock()
 cache_lock = threading.Lock()
+member_data_lock = threading.Lock()
 initial_sync_completed = False
 _store_cache: Optional[pd.DataFrame] = None
 _store_cache_source: Optional[Path] = None
@@ -823,6 +825,7 @@ def member_summary(name: str) -> dict[str, Any]:
         "name": merged_name,
         "contact": contact,
         "emergency": emergency,
+        "saved_member_data": _member_saved_data(merged_name),
         "membership_status": {
             "is_current": current_member,
             "label": membership_label,
@@ -954,6 +957,76 @@ def _load_trips() -> list[dict[str, Any]]:
 
 def _save_trips(trips: list[dict[str, Any]]) -> None:
     TRIPS_PATH.write_text(json.dumps(trips, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _member_data_key(name: Any) -> str:
+    return name_canonical_key(name)
+
+
+def _load_member_data() -> dict[str, Any]:
+    if not MEMBER_DATA_PATH.exists():
+        return {}
+    try:
+        payload = json.loads(MEMBER_DATA_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _save_member_data(payload: dict[str, Any]) -> None:
+    MEMBER_DATA_PATH.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _member_saved_data(name: str) -> dict[str, Any]:
+    key = _member_data_key(name)
+    if not key:
+        return {"comment": "", "membership_override": None}
+    with member_data_lock:
+        record = _load_member_data().get(key, {})
+    if not isinstance(record, dict):
+        record = {}
+    membership_override = record.get("membership_override")
+    if not isinstance(membership_override, dict):
+        membership_override = None
+    return {
+        "comment": clean_scalar(record.get("comment")),
+        "membership_override": membership_override,
+    }
+
+
+def _update_member_saved_data(name: str, payload: dict[str, Any]) -> dict[str, Any]:
+    key = _member_data_key(name)
+    if not key:
+        return {"comment": "", "membership_override": None}
+    with member_data_lock:
+        all_data = _load_member_data()
+        record = all_data.get(key, {})
+        if not isinstance(record, dict):
+            record = {}
+
+        if "comment" in payload:
+            comment = clean_scalar(payload.get("comment"))
+            if comment:
+                record["comment"] = comment
+            else:
+                record.pop("comment", None)
+
+        if "membership_override" in payload:
+            override = payload.get("membership_override")
+            if isinstance(override, dict) and "is_current" in override:
+                record["membership_override"] = {
+                    "is_current": bool(override.get("is_current")),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            elif override is None:
+                record.pop("membership_override", None)
+
+        if record:
+            all_data[key] = record
+        else:
+            all_data.pop(key, None)
+        _save_member_data(all_data)
+    return _member_saved_data(name)
 
 
 def _trip_is_archived(trip: dict[str, Any]) -> bool:
@@ -1157,6 +1230,7 @@ def recent_transactions(request: Request, days: int = 30):
             "emergency_contact_phone_2": "",
         },
         "membership_status": {"is_current": False, "label": "Membership"},
+        "saved_member_data": {"comment": "", "membership_override": None},
         "liability_waiver_status": {"is_current": False, "label": "Liability Waiver"},
         "hire_status": None,
         "scope": "global_last_week",
@@ -1222,3 +1296,12 @@ def member(request: Request, name: str):
     if redirect:
         return redirect
     return member_summary(name)
+
+
+@app.put("/api/member/{name}/saved-data")
+async def update_member_saved_data(request: Request, name: str):
+    redirect = require_login(request)
+    if redirect:
+        return redirect
+    payload = await request.json()
+    return _update_member_saved_data(name, payload if isinstance(payload, dict) else {})
