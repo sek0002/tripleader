@@ -100,12 +100,14 @@ function escapeAttribute(value) {
 function statusMarkup(isCurrent, label, type = "membership") {
   const visible = type === "boat"
     ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 13.2 6.4 7.8h6.9l4.2 5.4H20l-1.7 4.1c-.8.4-1.6.6-2.4.6-1 0-1.8-.3-2.6-.8-.8.5-1.6.8-2.6.8s-1.8-.3-2.6-.8c-.8.5-1.6.8-2.6.8-.7 0-1.4-.2-2.1-.5L2 13.2h2Zm3.7-1.4h7.4l-2.4-3.1H9.1l-1.4 3.1Z" fill="currentColor"></path></svg>'
+    : type === "comment"
+      ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M11 5h2v9h-2V5Zm0 11h2v2h-2v-2Z" fill="currentColor"></path></svg>'
     : type === "membership"
       ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M5 6.2c0-1 .8-1.8 1.8-1.8h10.4c1 0 1.8.8 1.8 1.8v11.6c0 1-.8 1.8-1.8 1.8H6.8c-1 0-1.8-.8-1.8-1.8V6.2Zm3.2 3.1h7.6V7.8H8.2v1.5Zm0 3.2h7.6V11H8.2v1.5Zm0 3.2h4.9v-1.5H8.2v1.5Z" fill="currentColor"></path></svg>'
       : type === "liability"
         ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M7 3.8h7.8L19 8v12.2H7V3.8Zm7 1.9v3h3L14 5.7ZM9 11h8V9.6H9V11Zm0 3.2h8v-1.4H9v1.4Zm0 3.2h5.5V16H9v1.4Z" fill="currentColor"></path></svg>'
         : '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M9 4.8h6v2.1h1.4v2H15v10.3c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2V8.9H7.6v-2H9V4.8Zm1.8 0v2.1h2.4V4.8h-2.4Zm-.1 4.1v10.3c0 .2.1.3.3.3h2c.2 0 .3-.1.3-.3V8.9h-2.6Zm6.9 1.1h1.8v5.6h-1.8V10Z" fill="currentColor"></path></svg>';
-  const caption = type === "boat" && !isCurrent ? "overdue" : type === "membership" ? "Member" : type === "liability" ? "Liability" : type === "hire" ? "Gear" : "";
+  const caption = type === "boat" && !isCurrent ? "overdue" : type === "membership" ? "Member" : type === "liability" ? "Liability" : type === "hire" ? "Gear" : type === "comment" ? "Note" : "";
   const captionText = caption ? `<small class="statusBadgeCaption">${caption}</small>` : "";
   const title = label;
   const safeTitle = escapeAttribute(title);
@@ -538,10 +540,22 @@ async function renderTripMembers(card, trip) {
     const membershipStatusPayload = detail.membership_status || {};
     const liabilityWaiverStatusPayload = detail.liability_waiver_status || {};
     const hireStatusPayload = detail.hire_status || {};
-    appendStatus(statuses, Boolean(membershipStatusPayload.is_current), membershipStatusPayload.label || "Membership", "membership");
+    const savedMemberData = detail.saved_member_data || {};
+    const membershipOverride = savedMemberData.membership_override || null;
+    const membershipIsCurrent =
+      membershipOverride && typeof membershipOverride === "object"
+        ? Boolean(membershipOverride.is_current)
+        : Boolean(membershipStatusPayload.is_current);
+    const membershipLabel =
+      membershipOverride && typeof membershipOverride === "object"
+        ? `Membership manually set: ${membershipIsCurrent ? "Member" : "Not member"}`
+        : membershipStatusPayload.label || "Membership";
+    const memberComment = String(savedMemberData.comment || "").trim();
+    appendStatus(statuses, membershipIsCurrent, membershipLabel, "membership");
     appendStatus(statuses, Boolean(liabilityWaiverStatusPayload.is_current), liabilityWaiverStatusPayload.label || "Liability Waiver", "liability");
     if (hireStatusPayload.is_current) appendStatus(statuses, true, hireStatusPayload.label || "Hire", "hire");
     if (detail.boat_payment_status) appendStatus(statuses, Boolean(detail.boat_payment_status.is_current), detail.boat_payment_status.label, "boat");
+    if (memberComment) appendStatus(statuses, true, memberComment, "comment");
 
     const remove = document.createElement("button");
     remove.className = "removeTripMemberButton";
@@ -574,7 +588,7 @@ async function renderTripMembers(card, trip) {
 
 function appendStatus(container, isCurrent, label, type = "membership") {
   const status = document.createElement("span");
-  status.className = `membershipStatus ${isCurrent ? "isCurrentMember" : "isNotCurrentMember"}`;
+  status.className = `membershipStatus ${type === "comment" ? "isCommented" : isCurrent ? "isCurrentMember" : "isNotCurrentMember"}`;
   status.innerHTML = statusMarkup(isCurrent, label, type);
   container.appendChild(status);
 }
