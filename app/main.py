@@ -29,12 +29,16 @@ LEGACY_PURCHASES_PATH = DATA_DIR / "purchases.csv"
 SYNC_STATE_PATH = BASE_DIR / "purchases.sync.json"
 TRIPS_PATH = BASE_DIR / "trips.json"
 MEMBER_DATA_PATH = BASE_DIR / "member-data.json"
+MEMBER_PROFILE_PATH = BASE_DIR / "member-profiles.json"
+MEMBER_PROFILE_SYNC_STATE_PATH = BASE_DIR / "member-profiles.sync.json"
 TEAMAPP_URL = "https://muuc.teamapp.com/clubs/132307/store/purchases.json"
+TEAMAPP_MEMBERSHIPS_URL = "https://muuc.teamapp.com/clubs/132307/memberships.json"
 TEAMAPP_PAGE_PARAM = "page"
 TEAMAPP_PAGE_RANGE = range(1, 7)
 TEAMAPP_REFRESH_PAGE_RANGE = range(1, 2)
 SYNC_INTERVAL_SECONDS = 60 * 60
 SYNC_STALE_SECONDS = 15 * 60
+MEMBER_PROFILE_SYNC_STALE_SECONDS = 24 * 60 * 60
 
 CATEGORIES = [
     ("Hire", ["hire"]),
@@ -76,6 +80,7 @@ load_dotenv(BASE_DIR / ".env")
 sync_lock = threading.Lock()
 cache_lock = threading.Lock()
 member_data_lock = threading.Lock()
+member_profile_lock = threading.Lock()
 initial_sync_completed = False
 _store_cache: Optional[pd.DataFrame] = None
 _store_cache_source: Optional[Path] = None
@@ -641,6 +646,205 @@ def fetch_remote_purchases(page_range: range = TEAMAPP_PAGE_RANGE) -> pd.DataFra
     return normalize_frame(pd.concat(frames, ignore_index=True))
 
 
+def _profile_text(profile: dict[str, Any], *fields: str) -> str:
+    return " ".join(clean_scalar(profile.get(field)) for field in fields if clean_scalar(profile.get(field)))
+
+
+def _membership_profile_record(row: dict[str, Any]) -> dict[str, str]:
+    return {
+        "name": normalize_member_name(row.get("name")),
+        "name_key": name_canonical_key(row.get("name")),
+        "email": clean_scalar(row.get("email")),
+        "email_key": clean_scalar(row.get("email")).casefold(),
+        "dive_certification": clean_scalar(row.get("Dive Certification*")),
+        "diving_history": clean_scalar(row.get("Diving History*")),
+        "membership_type": clean_scalar(row.get("Membership Type*")),
+        "gear_hire_acknowledgement": clean_scalar(row.get("Gear Hire*")),
+        "oxygen_blender_certification": clean_scalar(row.get("Oxygen blender certification")),
+        "access_groups_csv": clean_scalar(row.get("access_groups_csv")),
+        "restricted_admin_groups_csv": clean_scalar(row.get("restricted_admin_groups_csv")),
+        "note": clean_scalar(row.get("note")),
+        "updated_at": clean_scalar(row.get("updated_at")),
+    }
+
+
+def fetch_remote_member_profiles() -> list[dict[str, str]]:
+    profiles: list[dict[str, str]] = []
+    page = 1
+    next_url = ""
+    while page <= 200:
+        if next_url:
+            response = requests.get(next_url, headers=build_headers(), timeout=30)
+        else:
+            response = requests.get(
+                TEAMAPP_MEMBERSHIPS_URL,
+                headers=build_headers(),
+                params={"_csv_data": "v1", TEAMAPP_PAGE_PARAM: page},
+                timeout=30,
+            )
+        response.raise_for_status()
+        payload = response.json()
+        rows = payload.get("data", [])
+        if not isinstance(rows, list) or not rows:
+            break
+        profiles.extend(_membership_profile_record(row) for row in rows if isinstance(row, dict))
+        next_url = clean_scalar(payload.get("nextPageUrl"))
+        if next_url.startswith("/"):
+            next_url = f"https://muuc.teamapp.com{next_url}"
+        if not next_url:
+            break
+        page += 1
+    return profiles
+
+
+def _last_member_profile_synced_at() -> Optional[datetime]:
+    if MEMBER_PROFILE_SYNC_STATE_PATH.exists():
+        try:
+            payload = json.loads(MEMBER_PROFILE_SYNC_STATE_PATH.read_text(encoding="utf-8"))
+            synced_at = _parse_stored_sync_time(payload.get("at"))
+            if synced_at is not None:
+                return synced_at
+        except Exception:
+            pass
+    if not MEMBER_PROFILE_PATH.exists():
+        return None
+    try:
+        return datetime.fromtimestamp(MEMBER_PROFILE_PATH.stat().st_mtime, tz=timezone.utc)
+    except Exception:
+        return None
+
+
+def _member_profile_sync_is_stale(now: datetime) -> bool:
+    synced_at = _last_member_profile_synced_at()
+    if synced_at is None:
+        return True
+    return (now - synced_at).total_seconds() >= MEMBER_PROFILE_SYNC_STALE_SECONDS
+
+
+def _save_member_profiles(profiles: list[dict[str, str]], synced_at: datetime) -> None:
+    MEMBER_PROFILE_PATH.write_text(json.dumps(profiles, indent=2, sort_keys=True), encoding="utf-8")
+    MEMBER_PROFILE_SYNC_STATE_PATH.write_text(
+        json.dumps({"at": synced_at.isoformat(), "rows": len(profiles)}, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
+def sync_member_profiles(force: bool = False) -> dict[str, Any]:
+    now = datetime.now(timezone.utc)
+    with member_profile_lock:
+        if not force and MEMBER_PROFILE_PATH.exists() and not _member_profile_sync_is_stale(now):
+            profiles = _load_member_profiles()
+            return {
+                "ok": True,
+                "message": "Using cached member profile data.",
+                "rows": len(profiles),
+                "at": (_last_member_profile_synced_at() or now).isoformat(),
+            }
+        try:
+            profiles = fetch_remote_member_profiles()
+            _save_member_profiles(profiles, now)
+            return {
+                "ok": True,
+                "message": f"Fetched {len(profiles)} member profile rows.",
+                "rows": len(profiles),
+                "at": now.isoformat(),
+            }
+        except Exception as exc:
+            profiles = _load_member_profiles()
+            return {
+                "ok": False,
+                "message": str(exc),
+                "rows": len(profiles),
+                "at": now.isoformat(),
+            }
+
+
+def _load_member_profiles() -> list[dict[str, str]]:
+    if not MEMBER_PROFILE_PATH.exists():
+        return []
+    try:
+        payload = json.loads(MEMBER_PROFILE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    return payload if isinstance(payload, list) else []
+
+
+def _find_member_profile(name: str, email: str = "") -> Optional[dict[str, str]]:
+    profiles = _load_member_profiles()
+    email_key = clean_scalar(email).casefold()
+    if email_key:
+        for profile in profiles:
+            if clean_scalar(profile.get("email_key")) == email_key:
+                return profile
+            if clean_scalar(profile.get("email")).casefold() == email_key:
+                return profile
+    name_key = name_canonical_key(name)
+    if name_key:
+        for profile in profiles:
+            if clean_scalar(profile.get("name_key")) == name_key:
+                return profile
+            if name_canonical_key(profile.get("name")) == name_key:
+                return profile
+    return None
+
+
+def _certification_statuses(profile: Optional[dict[str, Any]]) -> list[dict[str, str]]:
+    if not profile:
+        return []
+    source = _profile_text(profile, "dive_certification")
+    access_groups = clean_scalar(profile.get("access_groups_csv"))
+    source_lower = source.casefold()
+    access_groups_lower = access_groups.casefold()
+    statuses: list[dict[str, str]] = []
+    if re.search(r"\bandp\b|\btech\b|technical|advanced\s+nitrox|deco\s+procedure|decompression\s+procedure", source_lower):
+        statuses.append({"code": "Tech", "label": "Tech"})
+    elif re.search(r"\ba\.?o\.?w\.?\b|advanced\s+open\s+water|\badventure\b|\bdeep\b", source_lower):
+        statuses.append({"code": "AOW", "label": "AOW"})
+    elif re.search(r"\bo\.?w\.?\b|open\s+water|\bowd\b", source_lower):
+        statuses.append({"code": "OW", "label": "OW"})
+    if re.search(r"\bnitrox\b", source_lower):
+        statuses.append({"code": "NO", "label": "Nitrox"})
+    access_groups_has_dive_master = re.search(r"\bd\.?m\.?\b|\bdive\s+master\b|\bdivemaster\b", access_groups_lower)
+    if access_groups_has_dive_master:
+        statuses.append({"code": "Pro", "label": "Dive Master"})
+    return statuses
+
+
+def _role_statuses(profile: Optional[dict[str, Any]]) -> list[dict[str, str]]:
+    if not profile:
+        return []
+    source = clean_scalar(profile.get("access_groups_csv"))
+    source_lower = source.casefold()
+    statuses: list[dict[str, str]] = []
+    if "boat dive check" in source_lower:
+        statuses.append({"code": "Boat", "label": "Boat Dive Check"})
+    if "certified oxygen blenders" in source_lower:
+        statuses.append({"code": "O2", "label": "Certified Oxygen Blender"})
+    if "instructor" in source_lower or "msdt" in source_lower:
+        statuses.append({"code": "Inst", "label": "Instructor"})
+    if "endorsed car driver" in source_lower:
+        statuses.append({"code": "Car", "label": "Endorsed Car Driver"})
+    return statuses
+
+
+def _member_profile_summary(profile: Optional[dict[str, Any]]) -> dict[str, Any]:
+    if not profile:
+        return {
+            "dive_certification": "",
+            "diving_history": "",
+            "membership_type": "",
+            "certification_statuses": [],
+            "role_statuses": [],
+        }
+    return {
+        "dive_certification": clean_scalar(profile.get("dive_certification")),
+        "diving_history": clean_scalar(profile.get("diving_history")),
+        "membership_type": clean_scalar(profile.get("membership_type")),
+        "certification_statuses": _certification_statuses(profile),
+        "role_statuses": _role_statuses(profile),
+    }
+
+
 def sync_purchases(force: bool = False) -> dict[str, Any]:
     global initial_sync_completed
     with sync_lock:
@@ -648,15 +852,19 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
         has_existing_data = not existing.empty
         now = datetime.now(timezone.utc)
         if not force and has_existing_data and not _is_sync_stale(now):
+            profile_status = sync_member_profiles()
             status = {
                 "ok": True,
                 "message": "Using cached purchase data (checked less than 15 minutes ago).",
                 "rows": int(len(existing)),
                 "at": _last_synced_at().isoformat() if _last_synced_at() else now.isoformat(),
             }
+            if profile_status.get("ok") is False:
+                status["message"] = f"{status['message']} Member profile sync issue: {profile_status.get('message')}"
             last_sync.update(status)
             result = dict(last_sync)
             result["date_range"] = purchase_date_range(load_store())
+            result["member_profiles"] = profile_status
             return result
         page_range = (
             TEAMAPP_REFRESH_PAGE_RANGE
@@ -693,9 +901,13 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
         finally:
             initial_sync_completed = True
 
+        profile_status = sync_member_profiles()
+        if profile_status.get("ok") is False:
+            status["message"] = f"{status.get('message', '')} Member profile sync issue: {profile_status.get('message')}"
         last_sync.update(status)
         result = dict(last_sync)
         result["date_range"] = purchase_date_range(load_store())
+        result["member_profiles"] = profile_status
         return result
 
 
@@ -703,6 +915,7 @@ def hourly_worker() -> None:
     while True:
         time.sleep(SYNC_INTERVAL_SECONDS)
         sync_purchases()
+        sync_member_profiles()
 
 
 def category_for_item(item: str) -> str:
@@ -717,11 +930,26 @@ def names_from_store() -> list[str]:
     df = load_store()
     email_to_name: dict[str, str] = {}
     grouped_names: dict[str, str] = {}
+    profiles = _load_member_profiles()
+    profile_by_email = {
+        clean_scalar(profile.get("email")).casefold(): normalize_member_name(profile.get("name"))
+        for profile in profiles
+        if clean_scalar(profile.get("email")) and normalize_member_name(profile.get("name"))
+    }
+    profile_by_name = {
+        name_canonical_key(profile.get("name")): normalize_member_name(profile.get("name"))
+        for profile in profiles
+        if normalize_member_name(profile.get("name"))
+    }
     for _, row in df.iterrows():
         name = normalize_member_name(row.get("name"))
+        email = clean_scalar(row.get("email")).casefold()
+        if email and profile_by_email.get(email):
+            name = profile_by_email[email]
+        elif name and profile_by_name.get(name_canonical_key(name)):
+            name = profile_by_name[name_canonical_key(name)]
         if not name:
             continue
-        email = clean_scalar(row.get("email")).casefold()
         if email:
             if _is_preferred_name(email_to_name.get(email, ""), name):
                 email_to_name[email] = name
@@ -743,6 +971,11 @@ def _member_matches(name: str) -> pd.DataFrame:
     matches = df[df["name_key"] == name_key].copy()
     if matches.empty:
         matches = df[df["name"].map(name_canonical_key) == name_key].copy()
+    if matches.empty:
+        profile = _find_member_profile(name)
+        profile_email = clean_scalar(profile.get("email")) if profile else ""
+        if profile_email:
+            matches = df[df["email"].str.casefold() == profile_email.casefold()].copy()
     if matches.empty:
         return matches
 
@@ -766,8 +999,10 @@ def member_summary(name: str) -> dict[str, Any]:
     payment_year_matches = matches[matches["date"].map(row_year).eq(payment_year)].copy()
     hire_status_matches = matches.copy()
 
+    profile_by_email = _find_member_profile(name, base_email)
+    profile_name = normalize_member_name(profile_by_email.get("name")) if profile_by_email else ""
     merged_names = [normalize_member_name(value) for value in matches["name"]]
-    merged_name = max((value for value in merged_names if value), key=len, default=name)
+    merged_name = profile_name or max((value for value in merged_names if value), key=len, default=name)
     latest = matches.iloc[0]
     contact_phone = next(
         (clean_scalar(value) for value in matches["phone"] if clean_scalar(value)),
@@ -803,6 +1038,7 @@ def member_summary(name: str) -> dict[str, Any]:
     )
     liability_waiver_label = _current_status_year_label(matches, is_current_year_liability_waiver_paid, "Liability Waiver")
     hire_status = _hire_status_for_payment_year(hire_status_matches)
+    member_profile = profile_by_email or _find_member_profile(merged_name, base_email)
 
     grouped: dict[str, list[dict[str, str]]] = {category: [] for category, _ in CATEGORIES}
     for _, row in payment_year_matches.iterrows():
@@ -826,6 +1062,7 @@ def member_summary(name: str) -> dict[str, Any]:
         "contact": contact,
         "emergency": emergency,
         "saved_member_data": _member_saved_data(merged_name),
+        "member_profile": _member_profile_summary(member_profile),
         "membership_status": {
             "is_current": current_member,
             "label": membership_label,
@@ -879,7 +1116,7 @@ def _recent_week_transactions(days: int = 7) -> dict[str, dict[str, list[dict[st
     today = datetime.now(timezone.utc).replace(tzinfo=None)
     cutoff = today - timedelta(days=days)
     transactions = matches.copy()
-    transactions["_date"] = pd.to_datetime(transactions["date"], errors="coerce")
+    transactions["_date"] = pd.to_datetime(transactions["date"], format="mixed", errors="coerce")
     recent = transactions.loc[
         transactions["_date"].notna()
         & (transactions["_date"] >= cutoff)
@@ -1232,6 +1469,13 @@ def recent_transactions(request: Request, days: int = 30):
         },
         "membership_status": {"is_current": False, "label": "Membership"},
         "saved_member_data": {"comment": "", "membership_override": None},
+        "member_profile": {
+            "dive_certification": "",
+            "diving_history": "",
+            "membership_type": "",
+            "certification_statuses": [],
+            "role_statuses": [],
+        },
         "liability_waiver_status": {"is_current": False, "label": "Liability Waiver"},
         "hire_status": None,
         "scope": "global_last_week",

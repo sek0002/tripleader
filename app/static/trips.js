@@ -101,6 +101,8 @@ function escapeAttribute(value) {
 function statusMarkup(isCurrent, label, type = "membership") {
   const visible = type === "boat"
     ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 13.2 6.4 7.8h6.9l4.2 5.4H20l-1.7 4.1c-.8.4-1.6.6-2.4.6-1 0-1.8-.3-2.6-.8-.8.5-1.6.8-2.6.8s-1.8-.3-2.6-.8c-.8.5-1.6.8-2.6.8-.7 0-1.4-.2-2.1-.5L2 13.2h2Zm3.7-1.4h7.4l-2.4-3.1H9.1l-1.4 3.1Z" fill="currentColor"></path></svg>'
+    : type === "cert" || type === "role"
+      ? escapeAttribute(label)
     : type === "comment"
       ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M11 5h2v9h-2V5Zm0 11h2v2h-2v-2Z" fill="currentColor"></path></svg>'
     : type === "membership"
@@ -557,6 +559,7 @@ async function renderTripMembers(card, trip) {
     const membershipStatusPayload = detail.membership_status || {};
     const liabilityWaiverStatusPayload = detail.liability_waiver_status || {};
     const hireStatusPayload = detail.hire_status || {};
+    const memberProfile = detail.member_profile || {};
     const savedMemberData = detail.saved_member_data || {};
     const membershipOverride = savedMemberData.membership_override || null;
     const membershipIsCurrent =
@@ -572,6 +575,8 @@ async function renderTripMembers(card, trip) {
     appendStatus(statuses, Boolean(liabilityWaiverStatusPayload.is_current), liabilityWaiverStatusPayload.label || "Liability Waiver", "liability");
     if (hireStatusPayload.is_current) appendStatus(statuses, true, hireStatusPayload.label || "Hire", "hire");
     if (detail.boat_payment_status) appendStatus(statuses, Boolean(detail.boat_payment_status.is_current), detail.boat_payment_status.label, "boat");
+    (memberProfile.certification_statuses || []).forEach((status) => appendStatus(statuses, true, status.label || status.code, "cert", status.code));
+    (memberProfile.role_statuses || []).forEach((status) => appendStatus(statuses, true, status.label || status.code, "role", status.code));
     if (memberComment) appendStatus(statuses, true, memberComment, "comment");
 
     const remove = document.createElement("button");
@@ -603,10 +608,20 @@ async function renderTripMembers(card, trip) {
   renderTransactions(transactionSection, transactions);
 }
 
-function appendStatus(container, isCurrent, label, type = "membership") {
+function appendStatus(container, isCurrent, label, type = "membership", code = "") {
   const status = document.createElement("span");
-  status.className = `membershipStatus ${type === "comment" ? "isCommented" : isCurrent ? "isCurrentMember" : "isNotCurrentMember"}`;
-  status.innerHTML = statusMarkup(isCurrent, label, type);
+  status.className = `membershipStatus ${
+    type === "comment"
+      ? "isCommented"
+      : type === "cert"
+        ? "isCertificationStatus"
+        : type === "role"
+          ? "isRoleStatus"
+          : isCurrent
+            ? "isCurrentMember"
+            : "isNotCurrentMember"
+  }`;
+  status.innerHTML = statusMarkup(isCurrent, code || label, type);
   container.appendChild(status);
 }
 

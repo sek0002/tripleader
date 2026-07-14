@@ -396,6 +396,14 @@ button:disabled {
   color: var(--accent);
 }
 
+.membershipStatus.isCertificationStatus {
+  color: #0f7f91;
+}
+
+.membershipStatus.isRoleStatus {
+  color: #9a6a09;
+}
+
 .membershipIcon {
   align-items: center;
   display: inline-flex;
@@ -501,6 +509,22 @@ button:disabled {
 
 .statusBadge--membership {
   width: 28px;
+}
+
+.statusBadge--cert,
+.statusBadge--role {
+  font-size: 9px;
+  height: 28px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  min-width: 28px;
+  padding: 0 4px;
+  text-transform: uppercase;
+  width: auto;
+}
+
+.statusBadge--role {
+  min-width: 32px;
 }
 
 .statusBadge--membership svg,

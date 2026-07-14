@@ -14,7 +14,7 @@
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("muuc-theme") || "dark";
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=101">
+    <link rel="stylesheet" href="/static/styles.css?v=106">
   </head>
   <body>
     <main class="shell">
@@ -167,6 +167,20 @@
                     </div>
                   </div>
                 </div>
+                <div class="memberInfoCard memberInfoCard--stack">
+                  <div class="memberInfoField">
+                    <span>Membership type</span>
+                    <strong id="memberProfileMembershipType"></strong>
+                  </div>
+                  <div class="memberInfoField">
+                    <span>Dive certification</span>
+                    <strong id="memberDiveCertification"></strong>
+                  </div>
+                  <div class="memberInfoField">
+                    <span>Diving history</span>
+                    <strong id="memberDivingHistory"></strong>
+                  </div>
+                </div>
               </div>
             </div>
           </details>
@@ -211,6 +225,6 @@
     </main>
 
     <script src="/static/theme.js?v=98"></script>
-    <script src="/static/app.js?v=101"></script>
+    <script src="/static/app.js?v=106"></script>
   </body>
 </html>

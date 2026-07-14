@@ -22,10 +22,14 @@ const membershipStatus = document.querySelector("#membershipStatus");
 const liabilityWaiverStatus = document.querySelector("#liabilityWaiverStatus");
 const hireStatus = document.querySelector("#hireStatus");
 const commentStatus = document.querySelector("#commentStatus");
+const memberStatusRow = document.querySelector(".memberStatusRow");
 const memberCommentPanel = document.querySelector("#memberCommentPanel");
 const memberCommentInput = document.querySelector("#memberCommentInput");
 const memberEmail = document.querySelector("#memberEmail");
 const memberPhone = document.querySelector("#memberPhone");
+const memberProfileMembershipType = document.querySelector("#memberProfileMembershipType");
+const memberDiveCertification = document.querySelector("#memberDiveCertification");
+const memberDivingHistory = document.querySelector("#memberDivingHistory");
 const emergencyName = document.querySelector("#emergencyName");
 const emergencyRelationship = document.querySelector("#emergencyRelationship");
 const emergencyPhone = document.querySelector("#emergencyPhone");
@@ -204,6 +208,8 @@ function membershipStatusForPayload(payload, membershipStatusPayload) {
 function statusMarkup(isCurrent, label, type = "membership", options = {}) {
   const visible = type === "boat"
     ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 13.2 6.4 7.8h6.9l4.2 5.4H20l-1.7 4.1c-.8.4-1.6.6-2.4.6-1 0-1.8-.3-2.6-.8-.8.5-1.6.8-2.6.8s-1.8-.3-2.6-.8c-.8.5-1.6.8-2.6.8-.7 0-1.4-.2-2.1-.5L2 13.2h2Zm3.7-1.4h7.4l-2.4-3.1H9.1l-1.4 3.1Z" fill="currentColor"></path></svg>'
+    : type === "cert" || type === "role"
+      ? escapeAttribute(options.code || "")
     : type === "comment"
       ? '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M11 5h2v9h-2V5Zm0 11h2v2h-2v-2Z" fill="currentColor"></path></svg>'
     : type === "membership"
@@ -317,6 +323,16 @@ function parseDateTimestamp(value) {
   let match = dateText.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (match) {
     return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime();
+  }
+
+  match = dateText.match(/^(\d{4})-([A-Za-z]{3,})-(\d{1,2})/);
+  if (match) {
+    const monthIndex = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(
+      match[2].slice(0, 3).toLowerCase()
+    );
+    if (monthIndex >= 0) {
+      return new Date(Number(match[1]), monthIndex, Number(match[3])).getTime();
+    }
   }
 
   match = dateText.match(/^(\d{1,2})[/. -](\d{1,2})[/. -](\d{2,4})/);
@@ -595,6 +611,26 @@ function renderCommentStatus(payload, syncInput = true) {
   commentStatus.innerHTML = comment ? statusMarkup(true, "Comment saved", "comment") : "";
 }
 
+function clearProfileStatusIcons() {
+  document.querySelectorAll(".profileStatus").forEach((element) => element.remove());
+}
+
+function renderProfileStatusIcons(payload) {
+  clearProfileStatusIcons();
+  if (!memberStatusRow || payload.scope === "global_last_week") return;
+  const profile = payload.member_profile || {};
+  const statuses = []
+    .concat(profile.certification_statuses || [])
+    .map((status) => ({ ...status, type: "cert" }))
+    .concat((profile.role_statuses || []).map((status) => ({ ...status, type: "role" })));
+  statuses.forEach((status) => {
+    const wrapper = document.createElement("span");
+    wrapper.className = `membershipStatus profileStatus ${status.type === "cert" ? "isCertificationStatus" : "isRoleStatus"}`;
+    wrapper.innerHTML = statusMarkup(true, status.label || status.code, status.type, { code: status.code });
+    memberStatusRow.appendChild(wrapper);
+  });
+}
+
 function renderMember(payload) {
   if (serverRecentTransactions && payload.scope !== "global_last_week") {
     serverRecentTransactions.classList.add("hidden");
@@ -604,6 +640,7 @@ function renderMember(payload) {
     statusElement.classList.remove("isCurrentMember", "isNotCurrentMember");
     statusElement.innerHTML = "";
   });
+  clearProfileStatusIcons();
   hireStatus.classList.add("hidden");
   if (commentStatus) {
     commentStatus.classList.add("hidden");
@@ -629,7 +666,9 @@ function renderMember(payload) {
   const contactPayload = payload.contact || {};
   const emergencyPayload = payload.emergency || {};
   const hireStatusPayload = payload.hire_status || {};
+  const memberProfilePayload = payload.member_profile || {};
   renderCommentStatus(payload);
+  renderProfileStatusIcons(payload);
   const membershipViewStatus = membershipStatusForPayload(payload, membershipStatusPayload);
   const isCurrentMember = membershipViewStatus.isCurrent;
   if (isGlobalView) {
@@ -673,6 +712,9 @@ function renderMember(payload) {
   emergencyRelationship.textContent = text(emergencyPayload.emergency_contact_relationship);
   emergencyPhone.textContent = text(emergencyPayload.emergency_contact_phone);
   emergencyPhone2.textContent = text(emergencyPayload.emergency_contact_phone_2);
+  memberProfileMembershipType.textContent = text(memberProfilePayload.membership_type);
+  memberDiveCertification.textContent = text(memberProfilePayload.dive_certification);
+  memberDivingHistory.textContent = text(memberProfilePayload.diving_history);
 
   const isCurrentHire = Boolean(hireStatusPayload.is_current);
   if (isCurrentHire) {
