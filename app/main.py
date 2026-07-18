@@ -933,29 +933,62 @@ def _counted_item_text(item_text: str, count: int) -> str:
     return f"{count} x {item_text}"
 
 
+def _split_item_quantity(item_text: Any) -> tuple[int, str]:
+    cleaned = clean_scalar(item_text)
+    match = re.match(r"^\s*(\d+)\s*x\s+(.+)$", cleaned, flags=re.I)
+    if not match:
+        return 1, cleaned
+    try:
+        quantity = int(match.group(1))
+    except ValueError:
+        quantity = 1
+    return max(quantity, 1), match.group(2).strip()
+
+
+def _parse_money(value: Any) -> Optional[float]:
+    cleaned = re.sub(r"[^0-9.\-]", "", clean_scalar(value))
+    if not cleaned:
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
+def _format_money(total: Optional[float], fallback: str) -> str:
+    if total is None:
+        return fallback
+    return f"${total:.2f}"
+
+
 def _group_repeated_purchase_rows(rows: list[dict[str, str]], include_name: bool = False) -> list[dict[str, str]]:
     grouped: dict[tuple[str, ...], dict[str, Any]] = {}
     ordered_keys: list[tuple[str, ...]] = []
     for row in rows:
+        quantity, base_item = _split_item_quantity(row.get("items"))
+        total = _parse_money(row.get("total"))
         key_values = [
             clean_scalar(row.get("date")),
             clean_scalar(row.get("paid")),
-            clean_scalar(row.get("total")),
-            clean_scalar(row.get("items")),
+            base_item.casefold(),
         ]
         if include_name:
             key_values.insert(0, clean_scalar(row.get("name")))
         key = tuple(key_values)
         if key not in grouped:
-            grouped[key] = {"row": dict(row), "count": 0}
+            grouped[key] = {"row": dict(row), "base_item": base_item, "quantity": 0, "total": 0.0, "has_total": False}
             ordered_keys.append(key)
-        grouped[key]["count"] += 1
+        grouped[key]["quantity"] += quantity
+        if total is not None:
+            grouped[key]["total"] += total
+            grouped[key]["has_total"] = True
 
     compressed: list[dict[str, str]] = []
     for key in ordered_keys:
         entry = grouped[key]
         row = entry["row"]
-        row["items"] = _counted_item_text(clean_scalar(row.get("items")), int(entry["count"]))
+        row["items"] = _counted_item_text(clean_scalar(entry["base_item"]), int(entry["quantity"]))
+        row["total"] = _format_money(entry["total"] if entry["has_total"] else None, clean_scalar(row.get("total")))
         compressed.append(row)
     return compressed
 

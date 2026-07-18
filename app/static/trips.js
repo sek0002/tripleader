@@ -635,22 +635,35 @@ function transactionCategory(itemText) {
 function groupedRepeatedTransactions(transactions) {
   const grouped = new Map();
   transactions.forEach((transaction) => {
+    const itemMatch = text(transaction.items).match(/^\s*(\d+)\s*x\s+(.+)$/i);
+    const quantity = itemMatch ? Math.max(Number(itemMatch[1]) || 1, 1) : 1;
+    const baseItem = itemMatch ? itemMatch[2].trim() : text(transaction.items);
+    const totalNumber = Number(text(transaction.total).replace(/[^0-9.-]/g, ""));
     const key = [
       text(transaction.name),
       text(transaction.date),
       text(transaction.paid),
-      text(transaction.total),
-      text(transaction.items),
+      baseItem.toLowerCase(),
     ].join("||");
     if (!grouped.has(key)) {
-      grouped.set(key, { transaction: { ...transaction }, count: 0 });
+      grouped.set(key, { transaction: { ...transaction }, baseItem, quantity: 0, total: 0, hasTotal: false });
     }
-    grouped.get(key).count += 1;
+    const entry = grouped.get(key);
+    entry.quantity += quantity;
+    if (Number.isFinite(totalNumber)) {
+      entry.total += totalNumber;
+      entry.hasTotal = true;
+    }
   });
   return Array.from(grouped.values()).map((entry) => {
     const transaction = entry.transaction;
-    if (entry.count > 1) {
-      transaction.items = `${entry.count} x ${text(transaction.items)}`;
+    if (entry.quantity > 1) {
+      transaction.items = `${entry.quantity} x ${entry.baseItem}`;
+    } else {
+      transaction.items = entry.baseItem;
+    }
+    if (entry.hasTotal) {
+      transaction.total = `$${entry.total.toFixed(2)}`;
     }
     return transaction;
   });
