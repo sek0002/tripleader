@@ -705,7 +705,9 @@ function recentTripTransactions(transactions) {
 }
 
 function renderTransactions(container, transactions) {
-  const recentTransactions = recentTripTransactions(transactions);
+  const recentTransactions = recentTripTransactions(transactions).sort(
+    (left, right) => parseTransactionDate(right.date) - parseTransactionDate(left.date)
+  );
   const details = document.createElement("details");
   details.className = "searchDropdown tripTransactionSummary";
   const summary = document.createElement("summary");

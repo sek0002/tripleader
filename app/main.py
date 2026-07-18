@@ -39,6 +39,7 @@ TEAMAPP_REFRESH_PAGE_RANGE = range(1, 2)
 SYNC_INTERVAL_SECONDS = 60 * 60
 SYNC_STALE_SECONDS = 15 * 60
 MEMBER_PROFILE_SYNC_STALE_SECONDS = 24 * 60 * 60
+PURCHASE_SYNC_SCHEMA_VERSION = 2
 
 CATEGORIES = [
     ("Hire", ["hire"]),
@@ -519,10 +520,31 @@ def _last_synced_at() -> Optional[datetime]:
         return None
 
 
-def _persist_sync_state(rows: int, at: datetime) -> None:
+def _sync_state_payload() -> dict[str, Any]:
+    if not SYNC_STATE_PATH.exists():
+        return {}
     try:
+        payload = json.loads(SYNC_STATE_PATH.read_text(encoding="utf-8"))
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
+
+
+def _purchase_sync_needs_repair() -> bool:
+    payload = _sync_state_payload()
+    try:
+        return int(payload.get("schema_version", 0)) < PURCHASE_SYNC_SCHEMA_VERSION
+    except Exception:
+        return True
+
+
+def _persist_sync_state(rows: int, at: datetime, schema_version: Optional[int] = PURCHASE_SYNC_SCHEMA_VERSION) -> None:
+    try:
+        payload = {"at": at.isoformat(), "rows": rows}
+        if schema_version is not None:
+            payload["schema_version"] = schema_version
         SYNC_STATE_PATH.write_text(
-            json.dumps({"at": at.isoformat(), "rows": rows}, sort_keys=True),
+            json.dumps(payload, sort_keys=True),
             encoding="utf-8",
         )
     except Exception:
@@ -892,7 +914,8 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
         existing = deduplicate_purchases(load_store(), keep="first")
         has_existing_data = not existing.empty
         now = datetime.now(timezone.utc)
-        if not force and has_existing_data and not _is_sync_stale(now):
+        needs_repair = has_existing_data and _purchase_sync_needs_repair()
+        if not force and has_existing_data and not needs_repair and not _is_sync_stale(now):
             profile_status = sync_member_profiles()
             status = {
                 "ok": True,
@@ -907,7 +930,7 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
             result["date_range"] = purchase_date_range(load_store())
             result["member_profiles"] = profile_status
             return result
-        page_range = (
+        page_range = TEAMAPP_PAGE_RANGE if needs_repair else (
             TEAMAPP_REFRESH_PAGE_RANGE
             if (force or initial_sync_completed or has_existing_data)
             else TEAMAPP_PAGE_RANGE
@@ -932,7 +955,7 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
         except Exception as exc:
             save_store(existing)
             if has_existing_data:
-                _persist_sync_state(len(existing), now)
+                _persist_sync_state(len(existing), now, schema_version=None)
             status = {
                 "ok": False,
                 "message": str(exc),
@@ -1194,8 +1217,10 @@ def _trip_member_transactions(name: str) -> list[dict[str, str]]:
     matches = _member_matches(name)
     if matches.empty:
         return []
+    matches = matches.copy()
+    matches["_date"] = pd.to_datetime(matches["date"], format="mixed", errors="coerce")
     rows: list[dict[str, str]] = []
-    for _, row in matches.sort_values("date", ascending=False).iterrows():
+    for _, row in matches.sort_values("_date", ascending=False, na_position="last").iterrows():
         rows.append(
             {
                 "name": clean_scalar(row.get("name")),

@@ -46,6 +46,7 @@ const serverRecentTransactions = document.querySelector("#serverRecentTransactio
 let currentMemberPayload = null;
 let availableNames = [];
 let tableSorts = {};
+const defaultTableSort = { key: "date", direction: "desc" };
 let memberSearchSequence = 0;
 let memberSearchActive = false;
 let memberCommentSaveTimer = null;
@@ -362,8 +363,7 @@ function sortValue(row, key) {
 }
 
 function sortedRows(category, rows) {
-  const sort = tableSorts[category];
-  if (!sort) return rows;
+  const sort = tableSorts[category] || defaultTableSort;
 
   return [...rows].sort((left, right) => {
     const leftValue = sortValue(left, sort.key);
@@ -495,7 +495,7 @@ function tableCell(value) {
 function renderTableHead(category) {
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
-  const activeSort = tableSorts[category];
+  const activeSort = tableSorts[category] || defaultTableSort;
   const isGlobalView = currentMemberPayload && currentMemberPayload.scope === "global_last_week";
   const columns = isGlobalView
     ? [{ key: "name", label: "Name", firstDirection: "asc" }].concat(sortableColumns)
