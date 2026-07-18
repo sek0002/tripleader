@@ -24,10 +24,11 @@ const copiedIcon =
 const TRANSACTION_CATEGORIES = [
   { name: "Hire", needles: ["hire"] },
   { name: "Car Fee", needles: ["car fee"] },
-  { name: "Boat Dive/Exclusive", needles: ["boat dive", "exclusive"] },
+  { name: "Boat Dive/Exclusive", needles: ["boat dive", "exclusive", "general admission", "ticket"] },
   { name: "Air Fills/Tank Fills", needles: ["air fill", "air fills", "tank fill", "tank fills", "nitrox"] },
   { name: "Course", needles: ["course"] },
   { name: "Membership", needles: ["membership"] },
+  { name: "Other", needles: [] },
 ];
 
 function text(value) {
@@ -628,7 +629,31 @@ function appendStatus(container, isCurrent, label, type = "membership", code = "
 function transactionCategory(itemText) {
   const lowered = String(itemText || "").toLowerCase();
   const category = TRANSACTION_CATEGORIES.find((entry) => entry.needles.some((needle) => lowered.includes(needle)));
-  return category ? category.name : "";
+  return category ? category.name : "Other";
+}
+
+function groupedRepeatedTransactions(transactions) {
+  const grouped = new Map();
+  transactions.forEach((transaction) => {
+    const key = [
+      text(transaction.name),
+      text(transaction.date),
+      text(transaction.paid),
+      text(transaction.total),
+      text(transaction.items),
+    ].join("||");
+    if (!grouped.has(key)) {
+      grouped.set(key, { transaction: { ...transaction }, count: 0 });
+    }
+    grouped.get(key).count += 1;
+  });
+  return Array.from(grouped.values()).map((entry) => {
+    const transaction = entry.transaction;
+    if (entry.count > 1) {
+      transaction.items = `${entry.count} x ${text(transaction.items)}`;
+    }
+    return transaction;
+  });
 }
 
 function parseTransactionDate(value) {
@@ -707,8 +732,9 @@ function renderTransactions(container, transactions) {
             .includes(query)
         )
       : recentTransactions;
+    const groupedTransactions = groupedRepeatedTransactions(filteredTransactions);
 
-    if (!filteredTransactions.length) {
+    if (!groupedTransactions.length) {
       const empty = document.createElement("section");
       empty.className = "empty";
       empty.textContent = "No transactions match this filter.";
@@ -717,7 +743,7 @@ function renderTransactions(container, transactions) {
     }
 
   const grouped = new Map(TRANSACTION_CATEGORIES.map((category) => [category.name, []]));
-  filteredTransactions.forEach((transaction) => {
+  groupedTransactions.forEach((transaction) => {
     const category = transactionCategory(transaction.items);
     if (category) grouped.get(category).push(transaction);
   });

@@ -43,10 +43,11 @@ MEMBER_PROFILE_SYNC_STALE_SECONDS = 24 * 60 * 60
 CATEGORIES = [
     ("Hire", ["hire"]),
     ("Car Fee", ["car fee"]),
-    ("Boat Dive/Exclusive", ["boat dive", "exclusive"]),
+    ("Boat Dive/Exclusive", ["boat dive", "exclusive", "general admission", "ticket"]),
     ("Air Fills/Tank Fills", ["air fill", "air fills", "tank fill", "tank fills", "nitrox"]),
     ("Course", ["course"]),
     ("Membership", ["membership"]),
+    ("Other", []),
 ]
 
 DISPLAY_COLUMNS = [
@@ -923,7 +924,40 @@ def category_for_item(item: str) -> str:
     for category, needles in CATEGORIES:
         if any(needle in lowered for needle in needles):
             return category
-    return "Misc"
+    return "Other"
+
+
+def _counted_item_text(item_text: str, count: int) -> str:
+    if count <= 1:
+        return item_text
+    return f"{count} x {item_text}"
+
+
+def _group_repeated_purchase_rows(rows: list[dict[str, str]], include_name: bool = False) -> list[dict[str, str]]:
+    grouped: dict[tuple[str, ...], dict[str, Any]] = {}
+    ordered_keys: list[tuple[str, ...]] = []
+    for row in rows:
+        key_values = [
+            clean_scalar(row.get("date")),
+            clean_scalar(row.get("paid")),
+            clean_scalar(row.get("total")),
+            clean_scalar(row.get("items")),
+        ]
+        if include_name:
+            key_values.insert(0, clean_scalar(row.get("name")))
+        key = tuple(key_values)
+        if key not in grouped:
+            grouped[key] = {"row": dict(row), "count": 0}
+            ordered_keys.append(key)
+        grouped[key]["count"] += 1
+
+    compressed: list[dict[str, str]] = []
+    for key in ordered_keys:
+        entry = grouped[key]
+        row = entry["row"]
+        row["items"] = _counted_item_text(clean_scalar(row.get("items")), int(entry["count"]))
+        compressed.append(row)
+    return compressed
 
 
 def names_from_store() -> list[str]:
@@ -1055,7 +1089,7 @@ def member_summary(name: str) -> dict[str, Any]:
             }
         )
 
-    grouped = {category: rows for category, rows in grouped.items() if rows}
+    grouped = {category: _group_repeated_purchase_rows(rows) for category, rows in grouped.items() if rows}
     return {
         "found": True,
         "name": merged_name,
@@ -1138,7 +1172,12 @@ def _recent_week_transactions(days: int = 7) -> dict[str, dict[str, list[dict[st
                 "items": item_text,
             }
         )
-    return {category: rows for category, rows in grouped.items() if rows}
+    return {category: _group_repeated_purchase_rows(rows, include_name=True) for category, rows in grouped.items() if rows}
+
+
+def _is_boat_payment_item(item_text: Any) -> bool:
+    lowered = clean_scalar(item_text).casefold()
+    return any(term in lowered for term in ("boat", "general admission", "ticket"))
 
 
 def _boat_payment_status(name: str, trip_date_value: Any, boat_selected: bool) -> Optional[dict[str, Union[str, bool]]]:
@@ -1163,7 +1202,7 @@ def _boat_payment_status(name: str, trip_date_value: Any, boat_selected: bool) -
             paid
             and paid_date
             and payment_window_start <= paid_date <= trip_day
-            and "boat" in item_text
+            and _is_boat_payment_item(item_text)
         ):
             return {"is_current": True, "label": "Boat Fee Paid"}
 
