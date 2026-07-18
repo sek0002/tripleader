@@ -460,7 +460,15 @@ def normalize_frame(df: pd.DataFrame) -> pd.DataFrame:
         df["_dedupe_key"] = ""
         return df
     dedupe_source = df[DEDUPLICATION_COLUMNS].astype(str).fillna("")
-    df["_dedupe_key"] = dedupe_source.apply(lambda row: "||".join(row.astype(str)), axis=1)
+    df["_dedupe_key"] = dedupe_source.apply(
+        lambda row: "||".join(
+            [
+                clean_scalar(row.get("purchase_id")),
+                _split_item_quantity(row.get("items"))[1].casefold(),
+            ]
+        ),
+        axis=1,
+    )
     df = merge_names_by_email(df)
     return df
 
@@ -558,6 +566,38 @@ def deduplicate_purchases(df: pd.DataFrame, keep: str = "first") -> pd.DataFrame
     if df.empty:
         return df
     return df.drop_duplicates(subset=["_dedupe_key"], keep=keep).reset_index(drop=True)
+
+
+def _aggregate_repeated_purchase_items(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty or "_dedupe_key" not in df.columns:
+        return df
+
+    rows: list[dict[str, Any]] = []
+    for _, group in df.groupby("_dedupe_key", sort=False, dropna=False):
+        first = group.iloc[0].copy()
+        if len(group) <= 1:
+            rows.append(first.to_dict())
+            continue
+
+        base_item = ""
+        quantity = 0
+        total = 0.0
+        has_total = False
+        for _, row in group.iterrows():
+            item_quantity, item_text = _split_item_quantity(row.get("items"))
+            if not base_item:
+                base_item = item_text
+            quantity += item_quantity
+            row_total = _parse_money(row.get("total"))
+            if row_total is not None:
+                total += row_total
+                has_total = True
+
+        first["items"] = _counted_item_text(base_item or clean_scalar(first.get("items")), quantity)
+        first["total"] = _format_money(total if has_total else None, clean_scalar(first.get("total")))
+        rows.append(first.to_dict())
+
+    return normalize_frame(pd.DataFrame(rows))
 
 
 def purchase_date_range(df: Optional[pd.DataFrame] = None) -> dict[str, str]:
@@ -873,10 +913,10 @@ def sync_purchases(force: bool = False) -> dict[str, Any]:
             else TEAMAPP_PAGE_RANGE
         )
         try:
-            fresh = fetch_remote_purchases(page_range=page_range)
+            fresh = _aggregate_repeated_purchase_items(fetch_remote_purchases(page_range=page_range))
             existing_count = len(existing)
             merged = pd.concat([existing, fresh], ignore_index=True)
-            merged = deduplicate_purchases(merged, keep="first")
+            merged = deduplicate_purchases(merged, keep="last")
             added_count = len(merged) - existing_count
             save_store(merged)
             status = {
